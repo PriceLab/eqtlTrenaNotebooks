@@ -1,0 +1,26 @@
+version: '3.2'
+
+services:
+
+  trena:
+    build: ./trena
+    ports:
+      - "5548:5548"
+    volumes:
+      - type: volume
+        source: sharedData
+        target: /home/trena/tmp
+
+  nbserver:
+    build: ./nbserver
+    command:  start-notebook.sh --NotebookApp.base_url=/ --port=8872 --NotebookApp.token=
+    ports:
+      - "8872:8872"
+    volumes:
+      - type: volume
+        source: sharedData
+        target: /home/jovyan/mef2c/tmp
+      - "./nbserver/notebooks:/home/jovyan/mef2c/notebooks"
+
+volumes:
+    sharedData:
