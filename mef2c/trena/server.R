@@ -41,6 +41,8 @@ printf("loading footprints: %s", load("../data/tbl.fp.chr5.88615025-89052115.4so
 # we will check incoming fp(roi) requests against what we already have
 fp.roi <- list(chrom="chr5", start=88615025, end=89052115)  # "chr5:88,615,025-89,052,115"
 
+printf("loading enhancer regions: %s", load("../data/tbl.mef2c.eLocs.RData"))
+printf("loading enhancer motifs: %s", paste(load("../data/tbl.eMotifs.RData"), collapse=", "))
 #------------------------------------------------------------------------------------------------------------------------
 # precalculate two dhs/encode tables:
 #

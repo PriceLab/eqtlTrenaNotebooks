@@ -1,4 +1,4 @@
-FROM pshannon/ipytrenaviz:v0.9.11
+FROM pshannon/ipytrenaviz:v0.9.12
 USER root
 WORKDIR /home/jovyan
 COPY myBashCustomizations /home/jovyan/
@@ -17,7 +17,8 @@ COPY notebooks/* /home/jovyan/mef2c/notebooks/
 RUN mkdir /home/jovyan/mef2c/privateData
 RUN mkdir /home/jovyan/mef2c/sharedData
 
-RUN chown -R jovyan:users /home/jovyan
+RUN chown -R jovyan:users /home/jovyan/work
+RUN chown -R jovyan:users /home/jovyan/mef2c
 
 USER jovyan
 WORKDIR /home/jovyan/mef2c
