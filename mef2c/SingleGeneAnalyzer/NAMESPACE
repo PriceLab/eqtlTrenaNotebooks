@@ -1,0 +1,14 @@
+exportClasses(
+   SingleGeneAnalyzer
+)
+
+export(
+   SingleGeneAnalyzer
+   )
+
+exportMethods(
+   summarizeExpressionMatrices
+   )
+
+
+

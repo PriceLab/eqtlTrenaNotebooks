@@ -1,0 +1,14 @@
+exportClasses(
+   MEF2C.data
+)
+
+export(
+   MEF2C.data
+   )
+
+exportMethods(
+   getExpressionMatrices
+   )
+
+
+

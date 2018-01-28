@@ -1,0 +1,10 @@
+Package: SingleGeneAnalyzer
+Type: Package
+Title: Analyze a single gene in terms of expression, regulation and variant analysis
+Version: 0.99.0
+Date: 2018-01-28
+Author: Paul Shannon
+Maintainer: Paul Shannon <pshannon@systemsbiology.org>
+Description: Data and operations for the eqtl/enhancer trena notebook
+DEPENDS: rzmq, jsonlite, trena, trenaViz, RUnit
+License: MIT
