@@ -12,3 +12,5 @@ exportMethods(
 
 
 
+import(trena)
+#importFrom(trena, Trena)

@@ -7,8 +7,13 @@ export(
    )
 
 exportMethods(
-   getExpressionMatrices
-   )
+  getGenomicBounds,
+  getExpressionMatrices,
+  getFootprints
+  )
+
+
+import(SingleGeneData)
 
 
 

@@ -6,4 +6,5 @@ Date: 2018-01-28
 Author: Paul Shannon
 Maintainer: Paul Shannon<pshannon@systemsbiology.org>
 Description: package access to expression, eqtl, footprint, enhancer and variant data for MEF2C
+DEPENDS: SingleGeneData
 License: MIT
