@@ -3,14 +3,14 @@ exportClasses(
 )
 
 export(
-   SingleGeneAnalyzer
+   SingleGeneAnalyzer,
+   dataFrameToPandasFriendlyList
    )
 
 exportMethods(
-   summarizeExpressionMatrices
+   summarizeExpressionMatrices,
+   getFootprintsInRegion
    )
 
-
-
 import(trena)
-#importFrom(trena, Trena)
+importFrom(trena, parseChromLocString)

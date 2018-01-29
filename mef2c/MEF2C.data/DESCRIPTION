@@ -1,8 +1,8 @@
 Package: MEF2C.data
 Type: Package
 Title: MEF2C.data
-Version: 1.0
-Date: 2018-01-28
+Version: 0.99.0
+Date: 2018-01-29
 Author: Paul Shannon
 Maintainer: Paul Shannon<pshannon@systemsbiology.org>
 Description: package access to expression, eqtl, footprint, enhancer and variant data for MEF2C

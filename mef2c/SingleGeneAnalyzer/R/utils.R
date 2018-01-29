@@ -4,7 +4,9 @@ dataFrameToPandasFriendlyList <- function(tbl)
 {
    rownames = rownames(tbl)
    colnames = colnames(tbl)
+
    rownames(tbl) <- NULL
+   colnames(tbl) <- NULL
 
    list(rownames=rownames, colnames=colnames, tbl=tbl)
 

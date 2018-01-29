@@ -12,6 +12,8 @@
 PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('summarizeExpressionMatrices', signature='obj', function(obj) standardGeneric ('summarizeExpressionMatrices'))
+setGeneric('getFootprintsInRegion', signature='obj', function(obj, roiString, score.threshold=NA)
+              standardGeneric ('getFootprintsInRegion'))
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -54,10 +56,20 @@ setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
           tbl.mtx[name, c("nrow", "ncol")] <- dimensions
           } # for mtx.name
 
-         # this result is destined for JSON and a python pandas dataframe
-         # structure the data.frame as a 3-part list for easy uptake with pandas
+       tbl.mtx
+       })
 
-       dataFrameToPandasFriendlyList(tbl.mtx)
+#----------------------------------------------------------------------------------------------------
+setMethod('getFootprintsInRegion', 'SingleGeneAnalyzer',
+
+    function(obj, roiString, score.threshold=NA){
+       roi <- trena::parseChromLocString(roiString)
+       tbl.fp <- getFootprints(obj@singleGeneData, roi)
+
+       if(!is.na(score.threshold))
+         tbl.fp <- subset(tbl.fp, score >= score.threshold)
+
+       invisible(tbl.fp)
        })
 
 #----------------------------------------------------------------------------------------------------

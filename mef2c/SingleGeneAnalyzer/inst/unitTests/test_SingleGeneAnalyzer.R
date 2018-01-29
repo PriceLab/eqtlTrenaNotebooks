@@ -12,7 +12,9 @@ if(!exists("sga")){
 #------------------------------------------------------------------------------------------------------------------------
 runTests <- function()
 {
+   test_dataFrameToPandasFriendlyList()
    test_summarizeExpressionMatrices()
+   test_getFootprintsInRegion()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -20,11 +22,53 @@ test_summarizeExpressionMatrices <- function()
 {
     printf("--- test_summarizeExpressionMatrices")
 
-    pandas.friendly.list <- summarizeExpressionMatrices(sga)
-    checkTrue(all(c("rownames", "colnames","tbl") %in% names(pandas.friendly.list)))
-    tbl.summary <- pandas.friendly.list$tbl
+    tbl.summary <- summarizeExpressionMatrices(sga)
     checkEquals(class(tbl.summary), "data.frame")
-    checkEquals(nrow(tbl.summary), length(pandas.friendly.list$rownames))
+    checkEquals(dim(tbl.summary), c (3, 7))
+    checkEquals(colnames(tbl.summary), c("nrow", "ncol", "min", "q1", "median", "q3", "max"))
+    checkTrue(all(tbl.summary$min < 0))
+    checkTrue(all(tbl.summary$max > 0))
 
 } # test_summarizeExpressionMatrices
+#------------------------------------------------------------------------------------------------------------------------
+test_getFootprintsInRegion <- function()
+{
+    printf("--- test_getFootprintsInRegion")
+
+    roiString <- "chr5:88,883,173-88,884,172"
+    tbl.fp <- getFootprintsInRegion(sga, roiString)  # uses default score.threshold of 10
+    checkEquals(dim(tbl.fp), c(216, 12))
+       # make sure no filtering has taken place
+    checkTrue(any(tbl.fp$score < 0))
+    checkTrue(any(tbl.fp$score > 0))
+
+       # use a strong filter
+    tbl.fp <- getFootprintsInRegion(sga, roiString, score.threshold=20.0)
+    checkEquals(dim(tbl.fp), c(17, 12))
+    checkTrue(all(tbl.fp$score >= 20.0))
+
+} # test_getFootprintsInRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_dataFrameToPandasFriendlyList <- function()
+{
+   printf("--- test_dataFrameToPandasFriendlyList")
+
+   row.count <- 5
+
+   tbl <- data.frame(lower.case=letters[1:row.count],
+                     upper.case=LETTERS[1:row.count],
+                     int=sample(1:100, size=row.count),
+                     float=runif(row.count),
+                     stringsAsFactors=FALSE)
+   rownames(tbl) <- colors()[1:row.count]
+
+
+   x <- dataFrameToPandasFriendlyList(tbl)
+   checkEquals(sort(names(x)), c("colnames", "rownames", "tbl"))
+   checkEquals(x$colnames, colnames(tbl))
+   checkEquals(x$rownames, rownames(tbl))
+   checkTrue(is.null(colnames(x$tbl)))
+   checkEquals(rownames(x$tbl), as.character(1:row.count))
+
+} # test_dataFrameToPandasFriendlyList
 #------------------------------------------------------------------------------------------------------------------------
