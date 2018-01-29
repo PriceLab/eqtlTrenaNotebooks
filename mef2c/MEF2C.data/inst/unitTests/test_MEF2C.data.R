@@ -27,7 +27,7 @@ test_getGenomicBounds <- function()
 
     gd <- MEF2C.data()
     roi <- getGenomicBounds(gd)
-    with(roi, checkEquals(roi, list(chrom="chr5", start=88618415, end=89052071)))
+    with(roi, checkEquals(roi, list(chrom="chr5", start=88391000, end=89322000)))
 
 } # test_getGenomicBounds
 #------------------------------------------------------------------------------------------------------------------------

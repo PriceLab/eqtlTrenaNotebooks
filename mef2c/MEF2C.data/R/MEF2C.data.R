@@ -7,18 +7,58 @@ PORT <- 5548
 setGeneric('getGenomicBounds', signature='obj', function(obj) standardGeneric ('getGenomicBounds'))
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
+setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
-    mtx.names <- load(system.file(package="MEF2C.data", "extData", "mtx.withDimers.cer.ros.tcx.RData"))
+       #--------------------------------------------------------------------------------
+       # 3 normalized matrices, each with virtual dimer expression added
+       #--------------------------------------------------------------------------------
+
+    mtx.names <- load(system.file(package="MEF2C.data", "extdata", "mtx.withDimers.cer.ros.tcx.RData"))
     expression.matrices <- list()
     for(matrix.name in mtx.names){
        mtx <- eval(parse(text=matrix.name))
        expression.matrices[[matrix.name]] <- mtx
        }
-   load(system.file(package="MEF2C.data", "extData", "tbl.fp.chr5.88615025-89052115.4sources.noDups.RData"))
 
-   obj <- .MEF2C.data(SingleGeneData(chrom="chr5", start=88618415, end=89052071, tbl.fp, expression.matrices))
+       #--------------------------------------------------------------------------------
+       # all hint/wellington 16/20 footprints
+       #--------------------------------------------------------------------------------
+
+   load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88615025-89052115.4sources.noDups.RData")) # tbl.fp
+
+       #--------------------------------------------------------------------------------
+       # enhancers and their motifs
+       #--------------------------------------------------------------------------------
+
+   load(system.file(package="MEF2C.data", "extdata", "tbl.mef2c.eLocs.RData")) # tbl.mef2c.eLocs, dim 22 3
+
+   load(system.file(package="MEF2C.data", "extdata", "tbl.eMotifs.RData"))
+         #  tbl.eMotifs.mdb, [1]  43076    15
+         #  tbl.eMotifs.tfc, [1] 891914     15
+         # all motifs with motifRelativeScore >= 0.85, quite permissive
+
+   misc.data <- new.env(parent=emptyenv())
+   misc.data[["enhancer.locs"]] <- tbl.mef2c.eLocs
+   misc.data[["enhancer.motifs.mdb"]] <- tbl.eMotifs.mdb
+   misc.data[["enhancer.motifs.tfc"]] <- tbl.eMotifs.tfc
+
+       #--------------------------------------------------------------------------------
+       # vcf lifted over to hg38.  see extdata/README.txt, "vcf data reduction"
+       # per-sample phenotype data loaded here too
+       #--------------------------------------------------------------------------------
+   load(system.file(package="MEF2C.data", "extdata", "mtx.tcx.pheno.geno.RData"))
+   misc.data[["vcf.geno"]] <- tbl.geno
+   misc.data[["pheno"]]    <- tbl.pheno
+
+
+   obj <- .MEF2C.data(SingleGeneData(chrom="chr5",
+                                     start=88391000,  # see extdata/README.txt, padded enhancer span: "chr5:88391337-89321026"
+                                       end=89322000,
+                                     tbl.fp=tbl.fp,
+                                     expression.matrices=expression.matrices,
+                                     misc.data=misc.data))
    obj
 
 } # constructor
@@ -29,7 +69,6 @@ MEF2C.data = function()
 setMethod('getFootprints', 'MEF2C.data',
 
     function(obj, roi){
-      browser()
       tbl.roi <- subset(obj@tbl.fp, chrom==roi$chrom & start >= roi$start & end <= roi$end)
       if(nrow(tbl.roi) > 0)
          return(tbl.roi)

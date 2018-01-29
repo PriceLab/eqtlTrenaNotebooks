@@ -3,8 +3,8 @@
                                genomeName="character",
                                targetGene="character",
                                targetGene.TSS="numeric",
-                               dataPackageName="character",
-                               expressionMatrices="list",
+                               singleGeneData="SingleGeneData",
+                               trena="Trena",
                                quiet="logical"
                                )
                             )
@@ -13,17 +13,15 @@ PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('summarizeExpressionMatrices', signature='obj', function(obj) standardGeneric ('summarizeExpressionMatrices'))
 #------------------------------------------------------------------------------------------------------------------------
-SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, dataPackageName, quiet=TRUE)
+SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
-   require(dataPackageName, character.only=TRUE)
-   dataObj <- eval(parse(text=dataPackageName))()
-   expressionMatrices <- getExpressionMatrices(dataObj)
+   trena <- Trena(genomeName)
 
    obj <- .SingleGeneAnalyzer(genomeName=genomeName,
                               targetGene=targetGene,
                               targetGene.TSS=targetGene.TSS,
-                              dataPackageName=dataPackageName,
-                              expressionMatrices=expressionMatrices,
+                              singleGeneData=singleGeneData,
+                              trena=trena,
                               quiet=quiet)
    obj
 
@@ -32,8 +30,9 @@ SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, dataPackag
 setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
 
     function(obj){
-       matrix.count <- length(obj@expressionMatrices)
-       matrix.names <- names(obj@expressionMatrices)
+       matrix.list <- getExpressionMatrices(obj@singleGeneData)
+       matrix.count <- length(matrix.list)
+       matrix.names <- names(matrix.list)
        empty.vec <- rep(0, matrix.count)
        tbl.mtx <- data.frame(name=matrix.names,
                              nrow=empty.vec,
@@ -48,7 +47,7 @@ setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
        tbl.mtx <- tbl.mtx[, -1]
 
        for(name in rownames(tbl.mtx)){
-          mtx <- obj@expressionMatrices[[name]]
+          mtx <- matrix.list[[name]]
           summary.stats <- fivenum(mtx)
           dimensions <- dim(mtx)
           tbl.mtx[name, c("min", "q1", "median", "q3", "max")] <- summary.stats
