@@ -13,7 +13,6 @@ if(!exists("sga")){
 runTests <- function()
 {
    test_summarizeExpressionMatrices()
-   test_getFootprints()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -28,13 +27,4 @@ test_summarizeExpressionMatrices <- function()
     checkEquals(nrow(tbl.summary), length(pandas.friendly.list$rownames))
 
 } # test_summarizeExpressionMatrices
-#------------------------------------------------------------------------------------------------------------------------
-test_getFootprints <- function()
-{
-   printf("--- test_getFootprints")
-
-   bounds <- getGenomicBounds(MEF2C.data)
-   tbl.fp <-
-
-} # test_getFootprints
 #------------------------------------------------------------------------------------------------------------------------

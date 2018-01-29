@@ -6,7 +6,7 @@ PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('getGenomicBounds', signature='obj', function(obj) standardGeneric ('getGenomicBounds'))
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
-setGeneric('getFootprints', signature='obj', function(obj, roiString) standardGeneric ('getFootprints'))
+setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
@@ -23,16 +23,16 @@ MEF2C.data = function()
 
 } # constructor
 #----------------------------------------------------------------------------------------------------
+# TODO: get intersection (perhaps empty) of roi with tbl.fp, then make live calls
+# TODO: to the footprint databases to fill in the missing regions
+
 setMethod('getFootprints', 'MEF2C.data',
 
-    function(obj, roiString){
-      roi <- trena::parseChromLocString(roiString)   # a trena function
-      if(roi$chrom == obj@tbl.fp$chrom &
-         roi$start >= obj@tbl.fp$start &
-         roi$end   <= obj@tbl.fp$end) {
-         tbl.roi <- subset(obj@tbl.fp, chrom==roi$chrom & start >= roi$start & end <= roi$end)
+    function(obj, roi){
+      browser()
+      tbl.roi <- subset(obj@tbl.fp, chrom==roi$chrom & start >= roi$start & end <= roi$end)
+      if(nrow(tbl.roi) > 0)
          return(tbl.roi)
-         }
 
       printf("MEF2C.data::getFootprints, roi not completely contained in precalculated footprints");
 

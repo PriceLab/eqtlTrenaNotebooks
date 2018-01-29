@@ -8,6 +8,7 @@ runTests <- function()
    test_basicConstructor()
    test_getGenomicBounds()
    test_getExpressionMatrices()
+   test_getFootprints()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -48,7 +49,9 @@ test_getFootprints <- function()
     printf("--- test_getFootprints")
 
     gd <- MEF2C.data()
-    tbl.fp <- getFootprints(gd)
+    roi <- getGenomicBounds(gd)
+    tbl.fp <- getFootprints(gd, roi)
+    checkEquals(dim(tbl.fp), c(13712, 12))
 
-} # test_getPrecalculatedFootprints
+} # test_getFootprints
 #----------------------------------------------------------------------------------------------------
