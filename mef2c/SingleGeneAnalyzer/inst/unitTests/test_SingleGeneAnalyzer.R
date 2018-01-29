@@ -14,7 +14,7 @@ runTests <- function()
 {
    test_dataFrameToPandasFriendlyList()
    test_summarizeExpressionMatrices()
-   test_getFootprintsInRegion()
+   test_getFootprintsForRegion()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -31,23 +31,23 @@ test_summarizeExpressionMatrices <- function()
 
 } # test_summarizeExpressionMatrices
 #------------------------------------------------------------------------------------------------------------------------
-test_getFootprintsInRegion <- function()
+test_getFootprintsForRegion <- function()
 {
-    printf("--- test_getFootprintsInRegion")
+    printf("--- test_getFootprintsForRegion")
 
     roiString <- "chr5:88,883,173-88,884,172"
-    tbl.fp <- getFootprintsInRegion(sga, roiString)  # uses default score.threshold of 10
+    tbl.fp <- getFootprintsForRegion(sga, roiString)  # uses default score.threshold of 10
     checkEquals(dim(tbl.fp), c(216, 12))
        # make sure no filtering has taken place
     checkTrue(any(tbl.fp$score < 0))
     checkTrue(any(tbl.fp$score > 0))
 
        # use a strong filter
-    tbl.fp <- getFootprintsInRegion(sga, roiString, score.threshold=20.0)
+    tbl.fp <- getFootprintsForRegion(sga, roiString, score.threshold=20.0)
     checkEquals(dim(tbl.fp), c(17, 12))
     checkTrue(all(tbl.fp$score >= 20.0))
 
-} # test_getFootprintsInRegion
+} # test_getFootprintsForRegion
 #------------------------------------------------------------------------------------------------------------------------
 test_dataFrameToPandasFriendlyList <- function()
 {

@@ -9,7 +9,7 @@ export(
 
 exportMethods(
    summarizeExpressionMatrices,
-   getFootprintsInRegion
+   getFootprintsForRegion
    )
 
 import(trena)

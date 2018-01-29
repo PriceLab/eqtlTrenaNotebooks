@@ -12,8 +12,8 @@
 PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('summarizeExpressionMatrices', signature='obj', function(obj) standardGeneric ('summarizeExpressionMatrices'))
-setGeneric('getFootprintsInRegion', signature='obj', function(obj, roiString, score.threshold=NA)
-              standardGeneric ('getFootprintsInRegion'))
+setGeneric('getFootprintsForRegion', signature='obj', function(obj, roiString, score.threshold=NA)
+              standardGeneric ('getFootprintsForRegion'))
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -60,7 +60,7 @@ setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
        })
 
 #----------------------------------------------------------------------------------------------------
-setMethod('getFootprintsInRegion', 'SingleGeneAnalyzer',
+setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
 
     function(obj, roiString, score.threshold=NA){
        roi <- trena::parseChromLocString(roiString)
