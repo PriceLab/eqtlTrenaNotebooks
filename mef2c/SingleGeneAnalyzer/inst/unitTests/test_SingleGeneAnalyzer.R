@@ -15,8 +15,32 @@ runTests <- function()
    test_dataFrameToPandasFriendlyList()
    test_summarizeExpressionMatrices()
    test_getFootprintsForRegion()
+   test_getVariantsForRegion()
 
 } # runTests
+#------------------------------------------------------------------------------------------------------------------------
+test_dataFrameToPandasFriendlyList <- function()
+{
+   printf("--- test_dataFrameToPandasFriendlyList")
+
+   row.count <- 5
+
+   tbl <- data.frame(lower.case=letters[1:row.count],
+                     upper.case=LETTERS[1:row.count],
+                     int=sample(1:100, size=row.count),
+                     float=runif(row.count),
+                     stringsAsFactors=FALSE)
+   rownames(tbl) <- colors()[1:row.count]
+
+
+   x <- dataFrameToPandasFriendlyList(tbl)
+   checkEquals(sort(names(x)), c("colnames", "rownames", "tbl"))
+   checkEquals(x$colnames, colnames(tbl))
+   checkEquals(x$rownames, rownames(tbl))
+   checkTrue(is.null(colnames(x$tbl)))
+   checkEquals(rownames(x$tbl), as.character(1:row.count))
+
+} # test_dataFrameToPandasFriendlyList
 #------------------------------------------------------------------------------------------------------------------------
 test_summarizeExpressionMatrices <- function()
 {
@@ -49,26 +73,22 @@ test_getFootprintsForRegion <- function()
 
 } # test_getFootprintsForRegion
 #------------------------------------------------------------------------------------------------------------------------
-test_dataFrameToPandasFriendlyList <- function()
+test_getVariantsForRegion <- function()
 {
-   printf("--- test_dataFrameToPandasFriendlyList")
+    printf("--- test_getVariantsForRegion")
 
-   row.count <- 5
+    roiString <- "chr5:88727837-88940643"
 
-   tbl <- data.frame(lower.case=letters[1:row.count],
-                     upper.case=LETTERS[1:row.count],
-                     int=sample(1:100, size=row.count),
-                     float=runif(row.count),
-                     stringsAsFactors=FALSE)
-   rownames(tbl) <- colors()[1:row.count]
+    tbl.snp <- getVariantsForRegion(sga, roiString)  # no filtering on score (-log10(CER_P))
+    checkEquals(dim(tbl.snp), c(94, 18))
 
+       # use a strong filter
+    tbl.snp <- getVariantsForRegion(sga, roiString, score.threshold=5)
+    checkEquals(dim(tbl.snp), c(12, 18))
+    checkTrue(all(-log10(tbl.snp$CER_P) >= 5))
 
-   x <- dataFrameToPandasFriendlyList(tbl)
-   checkEquals(sort(names(x)), c("colnames", "rownames", "tbl"))
-   checkEquals(x$colnames, colnames(tbl))
-   checkEquals(x$rownames, rownames(tbl))
-   checkTrue(is.null(colnames(x$tbl)))
-   checkEquals(rownames(x$tbl), as.character(1:row.count))
-
-} # test_dataFrameToPandasFriendlyList
+} # test_getVariantsForRegion
 #------------------------------------------------------------------------------------------------------------------------
+if(!interactive())
+   runTests()
+

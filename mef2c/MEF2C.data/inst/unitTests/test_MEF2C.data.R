@@ -55,3 +55,5 @@ test_getFootprints <- function()
 
 } # test_getFootprints
 #----------------------------------------------------------------------------------------------------
+if(!interactive())
+   runTests()

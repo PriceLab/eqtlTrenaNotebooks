@@ -13,4 +13,7 @@ packages:
 	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/BrowserViz-1)
 	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/trenaViz)
 	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/trena)
+	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/eqtlTrenaNotebooks/mef2c/SingleGeneData)
+	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/eqtlTrenaNotebooks/mef2c/MEF2C.data)
+	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/eqtlTrenaNotebooks/mef2c/SingleGeneAnalyzer)
 

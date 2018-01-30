@@ -48,11 +48,18 @@ MEF2C.data = function()
        # vcf lifted over to hg38.  see extdata/README.txt, "vcf data reduction"
        # per-sample phenotype data loaded here too
        #--------------------------------------------------------------------------------
+
    load(system.file(package="MEF2C.data", "extdata", "mtx.tcx.pheno.geno.RData"))
    misc.data[["vcf.geno"]] <- tbl.geno
    misc.data[["pheno"]]    <- tbl.pheno
 
+       #--------------------------------------------------------------------------------
+       # eqtl snps, from mayo.AD.collaboration/tbl.snp.hg38.score-ref-alt.RData
+       # dim(tbl.snps) 155 18
+       #--------------------------------------------------------------------------------
 
+   load(system.file(package="MEF2C.data", "extdata", "tbl.snp.hg38.score-ref-alt.RData"))
+   misc.data[["eqtl.snps"]] <- tbl.snp
    obj <- .MEF2C.data(SingleGeneData(chrom="chr5",
                                      start=88391000,  # see extdata/README.txt, padded enhancer span: "chr5:88391337-89321026"
                                        end=89322000,

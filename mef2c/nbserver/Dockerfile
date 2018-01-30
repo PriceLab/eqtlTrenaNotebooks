@@ -17,6 +17,7 @@ COPY notebooks/* /home/jovyan/mef2c/notebooks/
 RUN mkdir /home/jovyan/mef2c/privateData
 RUN mkdir /home/jovyan/mef2c/sharedData
 
+RUN chown -R jovyan:users /home/jovyan/.jupyter
 RUN chown -R jovyan:users /home/jovyan/work
 RUN chown -R jovyan:users /home/jovyan/mef2c
 

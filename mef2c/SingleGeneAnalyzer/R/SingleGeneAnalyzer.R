@@ -14,6 +14,8 @@ PORT <- 5548
 setGeneric('summarizeExpressionMatrices', signature='obj', function(obj) standardGeneric ('summarizeExpressionMatrices'))
 setGeneric('getFootprintsForRegion', signature='obj', function(obj, roiString, score.threshold=NA)
               standardGeneric ('getFootprintsForRegion'))
+setGeneric('getVariantsForRegion', signature='obj', function(obj, roiString, score.threshold=NA)
+              standardGeneric ('getVariantsForRegion'))
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -70,6 +72,18 @@ setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
          tbl.fp <- subset(tbl.fp, score >= score.threshold)
 
        invisible(tbl.fp)
+       })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
+
+    function(obj, roiString, score.threshold=NA){
+       roi <- trena::parseChromLocString(roiString)
+       tbl.all <- obj@singleGeneData@misc.data[["eqtl.snps"]]
+       tbl.sub <- subset(tbl.all, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
+       if(!is.na(score.threshold))
+          tbl.sub <- subset(tbl.sub, -log10(CER_P) >= score.threshold)
+       return(tbl.sub)
        })
 
 #----------------------------------------------------------------------------------------------------

@@ -62,8 +62,8 @@ class Trena:
         return(tbl)
 
     def getVariants(self, minScore, display, color, trackHeight=50):
-        msg = {'cmd': 'getVariants', 'status': 'request', 'callback': '',
-               'payload': {'minScore': minScore}}
+        payload = {"roi": self.getGenomicRegion(), 'minScore': minScore}
+        msg = {'cmd': 'getVariants', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
         payload = response["payload"]
