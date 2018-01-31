@@ -114,6 +114,9 @@ class Trena:
         msg = {'cmd': 'getDHSRegions', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
+        if(response["status"] != "success"):
+           print("no DHS regions found")
+           return(payload)
         payload = response["payload"]
         tblAsList = payload["tbl"]
         regTbl = self.dataFrameFrom3partList(tblAsList)
@@ -129,8 +132,8 @@ class Trena:
         response = json.loads(self.trenaServer.recv_string())
         payload = response["payload"]
         if(response["status"] != "success"):
-            print("no enhancers found")
-            return(payload)
+           print("no enhancers found")
+           return(payload)
         tblAsList = payload["tbl"]
         regTbl = self.dataFrameFrom3partList(tblAsList)
         regTbl.key = payload["key"]

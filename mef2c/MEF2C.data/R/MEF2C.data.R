@@ -60,20 +60,33 @@ MEF2C.data = function()
 
    load(system.file(package="MEF2C.data", "extdata", "tbl.snp.hg38.score-ref-alt.RData"))
    misc.data[["eqtl.snps"]] <- tbl.snp
-       #--------------------------------------------------------------------------------
 
+       #--------------------------------------------------------------------------------
        # dhs regions, then their motifs, from UCSC-hosted wgEncodeRegDnaseClustered
        #--------------------------------------------------------------------------------
+
    load(system.file(package="MEF2C.data", "extdata", "tbl.dhs.RData"))
    misc.data[["tbl.dhs"]] <- tbl.dhs
    load(system.file(package="MEF2C.data", "extdata", "tbl.dhsMotifs.RData"))
    misc.data[["tbl.dhsMotifs"]] <- tbl.dhsMotifs
+
+       #--------------------------------------------------------------------------------
+       # load all precalculated trena models
+       #--------------------------------------------------------------------------------
+
+   model.names <- load(system.file(package="MEF2C.data", "extdata", "mef2c.tf.5kb.RData"))
+   gene.models <- list()
+   for(name in model.names){  # 3 data.frames, 20 x 12
+     gene.models[[name]] <- eval(parse(text=name))
+     }
+
 
    obj <- .MEF2C.data(SingleGeneData(chrom="chr5",
                                      start=88391000,  # see extdata/README.txt, padded enhancer span: "chr5:88391337-89321026"
                                        end=89322000,
                                      tbl.fp=tbl.fp,
                                      expression.matrices=expression.matrices,
+                                     models=gene.models,
                                      misc.data=misc.data))
 
 
@@ -100,7 +113,7 @@ setMethod('getFootprints', 'MEF2C.data',
       # sources <- c(source.1, source.2, source.3, source.4)
       # names(sources) <- c("well_16", "well_20", "hint_16", "hint_20")
 
-     #  x <- getRegulatoryChromosomalRegions(trena, roi$chrom, roi$start, roi$end, sources, targetGene, targetGene.tss)
+      #  x <- getRegulatoryChromosomalRegions(trena, roi$chrom, roi$start, roi$end, sources, targetGene, targetGene.tss)
       # print(1)
       # names(x) <- names(sources)
       # print(2)

@@ -8,22 +8,25 @@
                                 end="numeric",
                                 tbl.fp="data.frame",
                                 expression.matrices="list",
+                                models="list",
                                 misc.data="environment",    # for anything not completely standardized
                                 quiet="logical"
                                 )
                              )
 
 #------------------------------------------------------------------------------------------------------------------------
-setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) standardGeneric ('getGenomicBounds'))
+setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) standardGeneric('getGenomicBounds'))
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
-setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
-setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
+setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric('getFootprints'))
+setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric('getEnhancers'))
+setGeneric('getModels', signature='obj', function(obj) standardGeneric('getModels'))
 #------------------------------------------------------------------------------------------------------------------------
-SingleGeneData <- function(chrom, start, end, tbl.fp, expression.matrices, misc.data)
+SingleGeneData <- function(chrom, start, end, tbl.fp, expression.matrices, models, misc.data)
 {
    .SingleGeneData(chrom=chrom, start=start, end=end,
                    tbl.fp=tbl.fp,
                    expression.matrices=expression.matrices,
+                   models=models,
                    misc.data=misc.data)
 
 } # ctor
@@ -52,6 +55,13 @@ setMethod('getFootprints', 'SingleGeneData',
           invisible(obj@tbl.fp)
        tbl.sub <- with(roi, subset(tbl.fp, chrom==chrom & start >= start & end <= end))
        invisible(tbl.sub)
+       })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getModels', 'SingleGeneData',
+
+    function(obj){
+       obj@models
        })
 
 #----------------------------------------------------------------------------------------------------

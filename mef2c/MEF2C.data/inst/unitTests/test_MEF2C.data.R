@@ -9,6 +9,7 @@ runTests <- function()
    test_getGenomicBounds()
    test_getExpressionMatrices()
    test_getFootprints()
+   test_getModels()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -57,6 +58,19 @@ test_getFootprints <- function()
     checkEquals(dim(tbl.fp), c(13712, 12))
 
 } # test_getFootprints
+#----------------------------------------------------------------------------------------------------
+test_getModels <- function()
+{
+    printf("--- test_getModels")
+
+    gd <- MEF2C.data()
+    model.list <- getModels(gd)
+    checkEquals(sort(names(model.list)), c("mef2c.cer", "mef2c.ros", "mef2c.tcx"))
+    checkTrue(all(lapply(model.list, class) == "data.frame"))
+    checkTrue(all(lapply(model.list, ncol) > 5))
+    checkTrue(all(lapply(model.list, nrow) > 5))
+
+} # test_getModels
 #----------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

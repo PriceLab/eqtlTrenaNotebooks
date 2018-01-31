@@ -20,6 +20,13 @@ handleMessage <- function(msg)
       tbl.summary.as.list <- dataFrameToPandasFriendlyList(tbl.summary)
       response <- list(cmd=msg$callback, status="success", callback="", payload=tbl.summary.as.list)
       }
+   else if(msg$cmd == "getGenomicBounds"){
+     print("dispatching getGenomicBounds, msg: ")
+      print(msg)
+      asString = msg$payload
+      result <- getGenomicBounds(mef2c.data, asString)
+      response <- list(cmd=msg$callback, status="success", callback="", payload=result);
+      }
    else if(msg$cmd == "getFootprintsInRegion"){
       stopifnot("roi" %in% names(msg$payload))
       roiString <- msg$payload$roi
@@ -216,7 +223,8 @@ handleMessage <- function(msg)
       response <- list(cmd=msg$callback, status="success", callback="", payload=g.json)
       } # buildMultiModelGraph
    else{
-      response <- list(cmd=msg$callback, status="success", callback="", payload="well-structured (unparsed) message")
+      response <- list(cmd=msg$callback, status="success", callback="",
+                       payload=sprintf("unrecognized command: '%s'", msg$cmd))
       }
 
    response

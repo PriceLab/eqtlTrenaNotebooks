@@ -13,7 +13,6 @@ if(!exists("sga")){
 runTests <- function()
 {
    test_dataFrameToPandasFriendlyList()
-   test_getGenomicBounds()
    test_summarizeExpressionMatrices()
    test_getFootprintsForRegion()
    test_getVariantsForRegion()
@@ -129,6 +128,16 @@ test_getEnhancersForRegion <- function()
     checkEquals(nrow(tbl), 0)
 
 } # test_getEnhancersForRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_findVariantsInModelForRegion <- function()
+{
+   printf("--- findVariantsInModelForRegion")
+   roiSting <- "chr5:88,821,191-88,821,221"    # includes rs244761, first intro variant, Chromosome: 5:88821210
+                                               #    GCTAATAATTGAATATCTTTTCTTT[A/T]TTTATATATAGTTGCAGCTACAGTG
+   pfms <- as.list(query(query(MotifDb, "jaspar2018"), "sapiens"))
+   tbl <- findVariantsInModelForRegion(sga, roiString, 0, pfms)
+
+} # test_findVariantsInModel
 #------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

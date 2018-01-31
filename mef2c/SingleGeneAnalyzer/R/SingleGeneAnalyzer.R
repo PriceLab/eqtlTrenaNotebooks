@@ -19,6 +19,8 @@ setGeneric('getVariantsForRegion', signature='obj', function(obj, roiString, sco
 setGeneric('getDHSForRegion', signature='obj', function(obj, roiString, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
            signature='obj', function(obj, roiString, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
+setGeneric('findVariantsInModelForRegion',
+           signature='obj', function(obj, roiString, model, shoulder, motifSources) standardGeneric ('findVariantsInModelForRegion'))
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -112,3 +114,12 @@ setMethod('getEnhancersForRegion', 'SingleGeneAnalyzer',
        })
 
 #----------------------------------------------------------------------------------------------------
+setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
+
+    function(obj, roiString, model, shoulder, motifSources){
+       browser()
+       xyz <- 99
+       })
+
+#----------------------------------------------------------------------------------------------------
+

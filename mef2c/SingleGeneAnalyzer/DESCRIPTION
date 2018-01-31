@@ -6,5 +6,5 @@ Date: 2018-01-29
 Author: Paul Shannon
 Maintainer: Paul Shannon <pshannon@systemsbiology.org>
 Description: Data and operations for the eqtl/enhancer trena notebook
-DEPENDS: rzmq, jsonlite, trena, trenaViz, RUnit
+Depends: rzmq, jsonlite, trena, trenaViz, MotifDb, RUnit
 License: MIT

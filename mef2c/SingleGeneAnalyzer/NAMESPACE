@@ -12,7 +12,8 @@ exportMethods(
    getFootprintsForRegion,
    getVariantsForRegion,
    getDHSForRegion,
-   getEnhancersForRegion
+   getEnhancersForRegion,
+   findVariantsInModelForRegion
    )
 
 import(trena)
