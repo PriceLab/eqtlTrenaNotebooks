@@ -34,30 +34,50 @@ handleMessage <- function(msg)
       roiString <- msg$payload$roi
       thresholdScore <- msg$payload$minScore
       tbl.snp <- getVariantsForRegion(sga, roiString, thresholdScore)
-      tbl.snp$filteringScore <- -log10(tbl.snp$CER_P)
-      tbl.var <- tbl.snp[, c("chrom", "pos", "pos", "rsid", "filteringScore")]
-      colnames(tbl.var) <- c("chrom", "start", "end", "id", "score")
-      rownames(tbl.var) <- NULL
-      key <- as.character(as.numeric(Sys.time()) * 100000)
-      tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.var)
-      payload <- list(tbl=tbl.fp.as.list, key=key)
-      response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
-      }
-   else if(msg$cmd == "getDHSRegionsInRegion"){
-      stopifnot("roi" %in% names(msg$payload))
-      roi = msg$payload$roi
-      tbl.dhs.roi <- getDHSRegions(roi)
-      if(nrow(tbl.dhs.roi) == 0){
-         response <- list(cmd=msg$callback, status="failure", callback="", payload="no overlapping regions");
+      if(nrow(tbl.snp) == 0){
+         response <- list(cmd=msg$callback, status="failure", callback="", payload="no variants in region");
          }
       else{
+        tbl.snp$filteringScore <- -log10(tbl.snp$CER_P)
+        tbl.var <- tbl.snp[, c("chrom", "pos", "pos", "rsid", "filteringScore")]
+        colnames(tbl.var) <- c("chrom", "start", "end", "id", "score")
+        rownames(tbl.var) <- NULL
+        key <- as.character(as.numeric(Sys.time()) * 100000)
+        tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.var)
+        payload <- list(tbl=tbl.fp.as.list, key=key)
+        response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+        } # nrow(tbl.snp) > 0
+      } # getVariants
+   else if(msg$cmd == "getDHSRegions"){
+      stopifnot("roi" %in% names(msg$payload))
+      thresholdScore <- msg$payload$minScore
+      roi = msg$payload$roi
+      tbl.dhs.roi <- getDHSForRegion(sga, roi)
+      printf("dhs regions found: %d", nrow(tbl.dhs.roi))
+      response <- list(cmd=msg$callback, status="failure", callback="", payload="no overlapping regions");
+      if(nrow(tbl.dhs.roi) > 0){
          key <- as.character(as.numeric(Sys.time()) * 100000)
          cache[[key]] <- tbl.dhs.roi
-         tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.dhs.roi)
-         payload <- list(tbl=tbl.fp.as.list, key=key)
+         tbl.dhs.as.list <- dataFrameToPandasFriendlyList(tbl.dhs.roi)
+         payload <- list(tbl=tbl.dhs.as.list, key=key)
          response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
          } # else: some overlap found
-      } # getDHsRegionsInRegion
+      } # getDHsRegions
+   else if(msg$cmd == "getEnhancers"){
+      stopifnot("roi" %in% names(msg$payload))
+      thresholdScore <- msg$payload$minScore
+      roi = msg$payload$roi
+      tbl.dhs.roi <- getEnhancersForRegion(sga, roi)
+      printf("dhs regions found: %d", nrow(tbl.dhs.roi))
+      response <- list(cmd=msg$callback, status="failure", callback="", payload="no overlapping regions");
+      if(nrow(tbl.dhs.roi) > 0){
+         key <- as.character(as.numeric(Sys.time()) * 100000)
+         cache[[key]] <- tbl.dhs.roi
+         tbl.dhs.as.list <- dataFrameToPandasFriendlyList(tbl.dhs.roi)
+         payload <- list(tbl=tbl.dhs.as.list, key=key)
+         response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+         } # else: some overlap found
+      } # getDHsRegions
    else if(msg$cmd == "getSessionInfo"){
       info <- as.character(sessionInfo())
       response <- list(cmd=msg$callback, status="success", callback="", payload=info)
@@ -79,21 +99,6 @@ handleMessage <- function(msg)
       payload <- list(tbl=tbl.fp.as.list, key=key)
       response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
       }
-   else if(msg$cmd == "getDHSRegionsInRegion"){
-      stopifnot("roi" %in% names(msg$payload))
-      roi = msg$payload$roi
-      tbl.dhs.roi <- getDHSRegions(roi)
-      if(nrow(tbl.dhs.roi) == 0){
-         response <- list(cmd=msg$callback, status="failure", callback="", payload="no overlapping regions");
-         }
-      else{
-         key <- as.character(as.numeric(Sys.time()) * 100000)
-         cache[[key]] <- tbl.dhs.roi
-         tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.dhs.roi)
-         payload <- list(tbl=tbl.fp.as.list, key=key)
-         response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
-         } # else: some overlap found
-      } # getDHsRegionsInRegion
    else if(msg$cmd == "getDHSMotifsInRegion"){
       stopifnot("roi" %in% names(msg$payload))
       roi <- msg$payload$roi

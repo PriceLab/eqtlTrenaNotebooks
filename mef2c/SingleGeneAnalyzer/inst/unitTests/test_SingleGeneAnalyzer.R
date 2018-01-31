@@ -13,9 +13,12 @@ if(!exists("sga")){
 runTests <- function()
 {
    test_dataFrameToPandasFriendlyList()
+   test_getGenomicBounds()
    test_summarizeExpressionMatrices()
    test_getFootprintsForRegion()
    test_getVariantsForRegion()
+   test_getDHSForRegion()
+   test_getEnhancersForRegion()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -87,7 +90,45 @@ test_getVariantsForRegion <- function()
     checkEquals(dim(tbl.snp), c(12, 18))
     checkTrue(all(-log10(tbl.snp$CER_P) >= 5))
 
+      # a region with no variants
+    tbl.snp <- getVariantsForRegion(sga, "chr5:88,883,347-88,884,158")
+    checkEquals(nrow(tbl.snp), 0)
+
 } # test_getVariantsForRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_getDHSForRegion <- function()
+{
+    printf("--- test_getDHSForRegion")
+
+    roiString <- "chr5:88727837-88940643"
+    roiString <- "chr5:88,896,922-88,909,299"
+
+    tbl.dhs <- getDHSForRegion(sga, roiString)  # no filtering on score, which ranges 0:1000
+    checkEquals(dim(tbl.dhs), c(4, 5))
+    checkEquals(colnames(tbl.dhs), c("chrom", "start", "end", "count", "score"))
+
+       # use a strong filter
+    tbl.dhs <- getDHSForRegion(sga, roiString, score.threshold=500)
+    checkEquals(dim(tbl.dhs), c(1, 5))
+    checkTrue(all(tbl.dhs$score >= 500))
+
+} # test_getDHSForRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_getEnhancersForRegion <- function()
+{
+    printf("--- test_getEnhancersForRegion")
+
+    roiString <- "chr5:88727837-88940643"
+
+    tbl <- getEnhancersForRegion(sga, roiString)
+    checkEquals(dim(tbl), c(12, 3))
+    checkEquals(colnames(tbl), c("chrom", "start", "end"))
+
+    roiString <- "chr5:88727837-88727847"   # just 10 bases, expect 0 enhancers
+    tbl <- getEnhancersForRegion(sga, roiString)
+    checkEquals(nrow(tbl), 0)
+
+} # test_getEnhancersForRegion
 #------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

@@ -44,6 +44,13 @@ class Trena:
         df = df.rename(rownameList)
         return(df)
 
+    def getBounds(self):
+        msg = {'cmd': 'getBounds', 'status': 'request', 'callback': '', 'payload': ''}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        payload = response["payload"]
+        return(payload)
+
     def getModelNames(self):
         msg = {'cmd': 'getModelNames', 'status': 'request', 'callback': '', 'payload': ''}
         self.trenaServer.send_string(json.dumps(msg))
@@ -104,16 +111,31 @@ class Trena:
 
     def getDHSinRegion(self, display):
         payload = {"roi": self.getGenomicRegion()}
-        msg = {'cmd': 'getDHSRegionsInRegion', 'status': 'request', 'callback': '', 'payload': payload}
+        msg = {'cmd': 'getDHSRegions', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
         payload = response["payload"]
-
         tblAsList = payload["tbl"]
         regTbl = self.dataFrameFrom3partList(tblAsList)
         regTbl.key = payload["key"]
         if(display):
-           self.tv.addBedTrackFromDataFrame(regTbl, "DHS", "SQUISHED", "darkreen")
+           self.tv.addBedTrackFromDataFrame(regTbl, "DHS", "SQUISHED", "darkreen", trackHeight=50)
+        return(regTbl)
+
+    def getEnhancersInRegion(self, display):
+        payload = {"roi": self.getGenomicRegion()}
+        msg = {'cmd': 'getEnhancers', 'status': 'request', 'callback': '', 'payload': payload}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        payload = response["payload"]
+        if(response["status"] != "success"):
+            print("no enhancers found")
+            return(payload)
+        tblAsList = payload["tbl"]
+        regTbl = self.dataFrameFrom3partList(tblAsList)
+        regTbl.key = payload["key"]
+        if(display):
+           self.tv.addBedTrackFromDataFrame(regTbl, "Enhancers", "SQUISHED", "darkreen", trackHeight=50)
         return(regTbl)
 
     def getDHSMotifsinRegion(self, display):
@@ -127,7 +149,7 @@ class Trena:
         regTbl = self.dataFrameFrom3partList(tblAsList)
         regTbl.key = payload["key"]
         if(display):
-           self.tv.addBedTrackFromDataFrame(regTbl, "DHS motifs", "SQUISHED", "magenta")
+           self.tv.addBedTrackFromDataFrame(regTbl, "DHS motifs", "SQUISHED", "magenta", trackHeight=50)
         return(regTbl)
 
     def findVariantsInModel(self, modelName, shoulder, display):

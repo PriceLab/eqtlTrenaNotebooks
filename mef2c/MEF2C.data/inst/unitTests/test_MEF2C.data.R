@@ -23,11 +23,14 @@ test_basicConstructor <- function()
 #------------------------------------------------------------------------------------------------------------------------
 test_getGenomicBounds <- function()
 {
-    printf("--- test_getGenomicBounds")
+   printf("--- test_getGenomicBounds")
 
-    gd <- MEF2C.data()
-    roi <- getGenomicBounds(gd)
-    with(roi, checkEquals(roi, list(chrom="chr5", start=88391000, end=89322000)))
+   gd <- MEF2C.data()
+   roi <- getGenomicBounds(gd)
+   with(roi, checkEquals(roi, list(chrom="chr5", start=88391000, end=89322000)))
+
+   roi.string <- getGenomicBounds(gd, asString=TRUE)
+   checkEquals(roi.string, "chr5:88391000-89322000")
 
 } # test_getGenomicBounds
 #------------------------------------------------------------------------------------------------------------------------

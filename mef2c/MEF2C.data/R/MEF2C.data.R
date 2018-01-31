@@ -4,7 +4,7 @@
 
 PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
-setGeneric('getGenomicBounds', signature='obj', function(obj) standardGeneric ('getGenomicBounds'))
+setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) standardGeneric ('getGenomicBounds'))
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
@@ -60,12 +60,23 @@ MEF2C.data = function()
 
    load(system.file(package="MEF2C.data", "extdata", "tbl.snp.hg38.score-ref-alt.RData"))
    misc.data[["eqtl.snps"]] <- tbl.snp
+       #--------------------------------------------------------------------------------
+
+       # dhs regions, then their motifs, from UCSC-hosted wgEncodeRegDnaseClustered
+       #--------------------------------------------------------------------------------
+   load(system.file(package="MEF2C.data", "extdata", "tbl.dhs.RData"))
+   misc.data[["tbl.dhs"]] <- tbl.dhs
+   load(system.file(package="MEF2C.data", "extdata", "tbl.dhsMotifs.RData"))
+   misc.data[["tbl.dhsMotifs"]] <- tbl.dhsMotifs
+
    obj <- .MEF2C.data(SingleGeneData(chrom="chr5",
                                      start=88391000,  # see extdata/README.txt, padded enhancer span: "chr5:88391337-89321026"
                                        end=89322000,
                                      tbl.fp=tbl.fp,
                                      expression.matrices=expression.matrices,
                                      misc.data=misc.data))
+
+
    obj
 
 } # constructor

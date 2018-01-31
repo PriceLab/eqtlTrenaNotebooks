@@ -16,6 +16,9 @@ setGeneric('getFootprintsForRegion', signature='obj', function(obj, roiString, s
               standardGeneric ('getFootprintsForRegion'))
 setGeneric('getVariantsForRegion', signature='obj', function(obj, roiString, score.threshold=NA)
               standardGeneric ('getVariantsForRegion'))
+setGeneric('getDHSForRegion', signature='obj', function(obj, roiString, score.threshold=NA) standardGeneric ('getDHSForRegion'))
+setGeneric('getEnhancersForRegion',
+           signature='obj', function(obj, roiString, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -81,8 +84,30 @@ setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
        roi <- trena::parseChromLocString(roiString)
        tbl.all <- obj@singleGeneData@misc.data[["eqtl.snps"]]
        tbl.sub <- subset(tbl.all, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
-       if(!is.na(score.threshold))
+       if(!is.na(score.threshold) & nrow(tbl.sub) > 0)
           tbl.sub <- subset(tbl.sub, -log10(CER_P) >= score.threshold)
+       return(tbl.sub)
+       })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getDHSForRegion', 'SingleGeneAnalyzer',
+
+    function(obj, roiString, score.threshold=NA){
+       roi <- trena::parseChromLocString(roiString)
+       tbl.all <- obj@singleGeneData@misc.data[["tbl.dhs"]]
+       tbl.sub <- subset(tbl.all, chrom==roi$chrom & start >= roi$start & end <= roi$end)
+       if(!is.na(score.threshold))
+          tbl.sub <- subset(tbl.sub,  score >= score.threshold)
+       return(tbl.sub)
+       })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getEnhancersForRegion', 'SingleGeneAnalyzer',
+
+    function(obj, roiString, score.threshold=NA){
+       roi <- trena::parseChromLocString(roiString)
+       tbl.all <- obj@singleGeneData@misc.data[["enhancer.locs"]]
+       tbl.sub <- subset(tbl.all, chrom==roi$chrom & start >= roi$start & end <= roi$end)
        return(tbl.sub)
        })
 

@@ -1,0 +1,9 @@
+Package: SingleGeneData
+Type: Package
+Title: abstract base class SingleGeneData
+Version: 0.99.2
+Date: 2018-01-29
+Author: Paul Shannon
+Maintainer: Paul Shannon<pshannon@systemsbiology.org>
+Description: abstract base class, providing abstractions fo for expression, eqtl, footprint, enhancer and variant data
+License: MIT
