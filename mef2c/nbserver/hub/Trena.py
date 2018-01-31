@@ -44,8 +44,8 @@ class Trena:
         df = df.rename(rownameList)
         return(df)
 
-    def getBounds(self):
-        msg = {'cmd': 'getBounds', 'status': 'request', 'callback': '', 'payload': ''}
+    def getBounds(self, asString=False):
+        msg = {'cmd': 'getGenomicBounds', 'status': 'request', 'callback': '', 'payload': asString}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
         payload = response["payload"]

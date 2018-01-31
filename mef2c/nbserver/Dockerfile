@@ -1,4 +1,4 @@
-FROM pshannon/ipytrenaviz:v0.9.12
+FROM pshannon/ipytrenaviz:v0.9.13
 USER root
 WORKDIR /home/jovyan
 COPY myBashCustomizations /home/jovyan/
