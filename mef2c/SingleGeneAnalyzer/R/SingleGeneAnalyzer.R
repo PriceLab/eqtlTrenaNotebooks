@@ -12,15 +12,19 @@
 PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('summarizeExpressionMatrices', signature='obj', function(obj) standardGeneric ('summarizeExpressionMatrices'))
-setGeneric('getFootprintsForRegion', signature='obj', function(obj, roiString, score.threshold=NA)
+setGeneric('getFootprintsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
               standardGeneric ('getFootprintsForRegion'))
-setGeneric('getVariantsForRegion', signature='obj', function(obj, roiString, score.threshold=NA)
+setGeneric('getVariantsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
               standardGeneric ('getVariantsForRegion'))
-setGeneric('getDHSForRegion', signature='obj', function(obj, roiString, score.threshold=NA) standardGeneric ('getDHSForRegion'))
+setGeneric('getDHSForRegion', signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
-           signature='obj', function(obj, roiString, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
-setGeneric('findVariantsInModelForRegion',
-           signature='obj', function(obj, roiString, model, shoulder, motifSources) standardGeneric ('findVariantsInModelForRegion'))
+           signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
+setGeneric('findVariantsInModelForRegion', signature='obj',
+           function(obj, roi.string, model.name, shoulder, tf.count=NA) standardGeneric ('findVariantsInModelForRegion'))
+setGeneric('findMotifsInRegion', signature='obj',
+           function(obj, roi.string, motifs, pwmMatchPercentage, variants=NA_character)
+              standardGeneric ('findMotifsInRegion'))
+
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -69,8 +73,8 @@ setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roiString, score.threshold=NA){
-       roi <- trena::parseChromLocString(roiString)
+    function(obj, roi.string, score.threshold=NA){
+       roi <- trena::parseChromLocString(roi.string)
        tbl.fp <- getFootprints(obj@singleGeneData, roi)
 
        if(!is.na(score.threshold))
@@ -82,8 +86,8 @@ setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roiString, score.threshold=NA){
-       roi <- trena::parseChromLocString(roiString)
+    function(obj, roi.string, score.threshold=NA){
+       roi <- trena::parseChromLocString(roi.string)
        tbl.all <- obj@singleGeneData@misc.data[["eqtl.snps"]]
        tbl.sub <- subset(tbl.all, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
        if(!is.na(score.threshold) & nrow(tbl.sub) > 0)
@@ -94,8 +98,8 @@ setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getDHSForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roiString, score.threshold=NA){
-       roi <- trena::parseChromLocString(roiString)
+    function(obj, roi.string, score.threshold=NA){
+       roi <- trena::parseChromLocString(roi.string)
        tbl.all <- obj@singleGeneData@misc.data[["tbl.dhs"]]
        tbl.sub <- subset(tbl.all, chrom==roi$chrom & start >= roi$start & end <= roi$end)
        if(!is.na(score.threshold))
@@ -106,17 +110,68 @@ setMethod('getDHSForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getEnhancersForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roiString, score.threshold=NA){
-       roi <- trena::parseChromLocString(roiString)
+    function(obj, roi.string, score.threshold=NA){
+       roi <- trena::parseChromLocString(roi.string)
        tbl.all <- obj@singleGeneData@misc.data[["enhancer.locs"]]
        tbl.sub <- subset(tbl.all, chrom==roi$chrom & start >= roi$start & end <= roi$end)
        return(tbl.sub)
        })
 
 #----------------------------------------------------------------------------------------------------
+setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
+
+      function(obj, roi.string, motifs, pwmMatchPercentage, variants=NA_character){
+          roi <- parseChromLocString(roi.string)
+          tbl.regions <- with(roi, data.frame(chrom=chrom, start=start, end=end, stringsAsFactors=FALSE))
+          findMotif <- function(motif){
+             mm <- MotifMatcher("hg38", as.list(query(query(MotifDb, motif), "jaspar2018")))
+             tbl <- findMatchesByChromosomalRegion(mm, tbl.regions, pwmMatchPercentage)
+             if(nrow(tbl) > 0)
+                tbl$motif <- motif
+             tbl
+             } # findMotif
+          tbls.all <- lapply(motifs, findMotif)
+          tbl.all <- do.call(rbind, tbls.all)
+          if(nrow(tbl.all) == 0)
+             return(data.frame())
+          tbl.all <- tbl.all[order(tbl.all$motifStart, tbl.all$motifEnd, decreasing=FALSE),]
+             # put the incomping "motif" in the firest column
+          preferred.column.order <- c("motif", "chrom","motifStart","motifEnd","strand","motifName","motifScore",
+                                      "motifRelativeScore","match","chromStart","chromEnd","seq","status")
+          tbl.all[, preferred.column.order]
+          }) # findMotifsInR
+
+#----------------------------------------------------------------------------------------------------
+# strategy:
+#   identify the tfs in the mode
+#   get the motifs associated with each
+#
 setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roiString, model, shoulder, motifSources){
+    function(obj, roi.string, model.name, shoulder, tf.count=NA){
+       stopifnot(model.name %in% names(getModels(obj@singleGeneData)))
+
+       roi <- parseChromLocString(roi.string)
+       tbl.snps <- obj@singleGeneData@misc.data[["eqtl.snps"]]
+       tbl.snps <- subset(tbl.snps, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
+       rsids <- tbl.snps$rsid
+
+       tfs <- tbl.model$gene
+       if(!is.na(tf.count)){
+          count <- min(length(tfs), tf.count)
+          tfs <- head(tfs, n=count)
+          }
+
+       lookup <- function(gene){
+          tbl.mdb <- geneToMotif(MotifDb, gene, "MotifDb", ignore.case=TRUE)
+          tbl.tfc <- geneToMotif(MotifDb, gene, "TFClass", ignore.case=TRUE)
+          motifs <- unique(c(tbl.mdb$motif, tbl.tfc$motif))
+          motifs <- grep("^MA", motifs, value=TRUE)
+          motifs
+          }
+
+       tf.motifs <- lapply(tfs, lookup)
+       names(tf.motifs) <- tfs
        browser()
        xyz <- 99
        })

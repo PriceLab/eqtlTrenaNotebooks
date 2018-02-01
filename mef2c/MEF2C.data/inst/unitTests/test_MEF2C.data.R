@@ -3,9 +3,13 @@ library(RUnit)
 #----------------------------------------------------------------------------------------------------
 printf <- function(...) print(noquote(sprintf(...)))
 #----------------------------------------------------------------------------------------------------
+if(!exists("mef2c")){
+   mef2c <- MEF2C.data()    # just load once, speeding up the tests
+   checkTrue(all(c("SingleGeneData", "MEF2C.data") %in% is(mef2c)))
+   }
+#----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
-   test_basicConstructor()
    test_getGenomicBounds()
    test_getExpressionMatrices()
    test_getFootprints()
@@ -13,24 +17,14 @@ runTests <- function()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
-test_basicConstructor <- function()
-{
-    printf("--- test_basicConstructor")
-
-    gd <- MEF2C.data()
-    checkTrue("MEF2C.data" %in% is(gd))
-
-} # test_basicConstructor
-#------------------------------------------------------------------------------------------------------------------------
 test_getGenomicBounds <- function()
 {
    printf("--- test_getGenomicBounds")
 
-   gd <- MEF2C.data()
-   roi <- getGenomicBounds(gd)
+   roi <- getGenomicBounds(mef2c)
    with(roi, checkEquals(roi, list(chrom="chr5", start=88391000, end=89322000)))
 
-   roi.string <- getGenomicBounds(gd, asString=TRUE)
+   roi.string <- getGenomicBounds(mef2c, asString=TRUE)
    checkEquals(roi.string, "chr5:88391000-89322000")
 
 } # test_getGenomicBounds
@@ -39,8 +33,7 @@ test_getExpressionMatrices <- function()
 {
     printf("--- test_getExpressionMatrices")
 
-    gd <- MEF2C.data()
-    x <- getExpressionMatrices(gd)
+    x <- getExpressionMatrices(mef2c)
     mtx.names <- c("mtx.cer", "mtx.ros", "mtx.tcx")
     checkEquals(sort(names(x)), mtx.names)
     dims <- lapply(x, dim)
@@ -52,9 +45,8 @@ test_getFootprints <- function()
 {
     printf("--- test_getFootprints")
 
-    gd <- MEF2C.data()
-    roi <- getGenomicBounds(gd)
-    tbl.fp <- getFootprints(gd, roi)
+    roi <- getGenomicBounds(mef2c)
+    tbl.fp <- getFootprints(mef2c, roi)
     checkEquals(dim(tbl.fp), c(13712, 12))
 
 } # test_getFootprints
@@ -63,9 +55,10 @@ test_getModels <- function()
 {
     printf("--- test_getModels")
 
-    gd <- MEF2C.data()
-    model.list <- getModels(gd)
-    checkEquals(sort(names(model.list)), c("mef2c.cer", "mef2c.ros", "mef2c.tcx"))
+    model.list <- getModels(mef2c)
+    checkEquals(sort(names(model.list)),
+                c("mef2c.cory.wgs.cer.tfClass", "mef2c.cory.wgs.ros.tfClass", "mef2c.cory.wgs.tcx.tfClass"))
+
     checkTrue(all(lapply(model.list, class) == "data.frame"))
     checkTrue(all(lapply(model.list, ncol) > 5))
     checkTrue(all(lapply(model.list, nrow) > 5))

@@ -1,7 +1,7 @@
 Package: SingleGeneAnalyzer
 Type: Package
 Title: Analyze a single gene in terms of expression, regulation and variant analysis
-Version: 0.99.4
+Version: 0.99.5
 Date: 2018-01-29
 Author: Paul Shannon
 Maintainer: Paul Shannon <pshannon@systemsbiology.org>

@@ -13,7 +13,8 @@ exportMethods(
    getVariantsForRegion,
    getDHSForRegion,
    getEnhancersForRegion,
-   findVariantsInModelForRegion
+   findVariantsInModelForRegion,
+   findMotifsInRegion
    )
 
 import(trena)
