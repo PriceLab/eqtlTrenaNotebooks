@@ -37,6 +37,28 @@ handleMessage <- function(msg)
       payload <- list(tbl=tbl.fp.as.list, key=key)
       response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
       }
+   else if(msg$cmd == "getMotifsInRegion"){
+      stopifnot("roi" %in% names(msg$payload))
+      stopifnot("motifs" %in% names(msg$payload))
+      stopifnot("matchScore" %in% names(msg$payload))
+      roiString <- msg$payload$roi
+      motifs <- msg$payload$motifs
+      matchScore <- msg$payload$matchScore
+      tbl.reg <- SingleGeneAnalyzer::findMotifsInRegion(sga, roiString, motifs, matchScore)
+      printf("found %d motifs in sequence: %s", nrow(tbl.reg), roiString)
+      if(nrow(tbl.reg) == 0){
+         response <- list(cmd=msg$callback, status="failure", callback="", payload="no motifs found");
+         }
+      else{
+         key <- as.character(as.numeric(Sys.time()) * 100000)
+         cache[[key]] <- tbl.reg
+         tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.reg)
+         payload <- list(tbl=tbl.fp.as.list, key=key)
+         print(payload)
+         response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+         }
+      } # getMotifsInRegion
+
    else if(msg$cmd == "getVariants"){
       roiString <- msg$payload$roi
       thresholdScore <- msg$payload$minScore
@@ -226,6 +248,9 @@ handleMessage <- function(msg)
       response <- list(cmd=msg$callback, status="success", callback="",
                        payload=sprintf("unrecognized command: '%s'", msg$cmd))
       }
+
+   print("--- about to leave handleMessage, response:")
+   print(response)
 
    response
 

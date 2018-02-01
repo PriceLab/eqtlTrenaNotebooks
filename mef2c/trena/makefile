@@ -16,4 +16,5 @@ packages:
 	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/eqtlTrenaNotebooks/mef2c/SingleGeneData)
 	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/eqtlTrenaNotebooks/mef2c/MEF2C.data)
 	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/eqtlTrenaNotebooks/mef2c/SingleGeneAnalyzer)
+	(cd ./pkgs; R CMD build --no-build-vignettes ~/github/MotifDb)
 

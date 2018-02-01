@@ -124,6 +124,8 @@ setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
           roi <- parseChromLocString(roi.string)
           tbl.regions <- with(roi, data.frame(chrom=chrom, start=start, end=end, stringsAsFactors=FALSE))
           findMotif <- function(motif){
+             pfms <- as.list(query(query(MotifDb, motif), "jaspar2018"))
+             printf("findMotifsInRegion.findMotif(%s), %d pfms from jaspar2018", motif, length(pfms))
              mm <- MotifMatcher("hg38", as.list(query(query(MotifDb, motif), "jaspar2018")))
              tbl <- findMatchesByChromosomalRegion(mm, tbl.regions, pwmMatchPercentage)
              if(nrow(tbl) > 0)
@@ -135,10 +137,13 @@ setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
           if(nrow(tbl.all) == 0)
              return(data.frame())
           tbl.all <- tbl.all[order(tbl.all$motifStart, tbl.all$motifEnd, decreasing=FALSE),]
-             # put the incomping "motif" in the firest column
-          preferred.column.order <- c("motif", "chrom","motifStart","motifEnd","strand","motifName","motifScore",
-                                      "motifRelativeScore","match","chromStart","chromEnd","seq","status")
-          tbl.all[, preferred.column.order]
+             # put the incomping "motif" in the fifth column; first five columns then
+             # follow good-enough bed format:  chrom start end name score strand
+          preferred.column.order <- c("chrom","motifStart","motifEnd", "motif", "motifRelativeScore", "strand",
+                                      "motifName", "motifScore", "match","chromStart","chromEnd","seq","status")
+          tbl.all <- tbl.all[, preferred.column.order]
+          colnames(tbl.all)[2:3] <- c("start", "end")
+          tbl.all
           }) # findMotifsInR
 
 #----------------------------------------------------------------------------------------------------
