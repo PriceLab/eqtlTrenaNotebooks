@@ -1,7 +1,7 @@
 build:
-	R CMD install --no-test-load ../SingleGeneData
-	R CMD install --no-test-load ../MEF2C.data
-	R CMD install --no-test-load ../SingleGeneAnalyzer
+	R CMD INSTALL --no-test-load ../SingleGeneData
+	R CMD INSTALL --no-test-load ../MEF2C.data
+	R CMD INSTALL --no-test-load ../SingleGeneAnalyzer
 
 test:
 	R -f MEF2C.data/inst/unitTests/test_MEF2C.data
