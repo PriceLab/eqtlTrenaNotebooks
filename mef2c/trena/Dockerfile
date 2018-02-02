@@ -3,6 +3,8 @@ USER root
 WORKDIR /home/trena
 RUN mkdir data
 RUN mkdir pkgs
+RUN mkdir tmp
+
 COPY server.R /home/trena/work/
 COPY newServer.R /home/trena/work/
 COPY data/* /home/trena/data/
@@ -16,6 +18,8 @@ RUN chown -R trena:users /home/trena/work
 RUN chown -R trena:users /home/trena/pkgs
 RUN chown -R trena:users /home/trena/data
 RUN chown -R trena:users /home/trena/sharedData
+RUN chown -R trena:users /home/trena/tmp
+
 USER trena
 WORKDIR /home/trena/work
 

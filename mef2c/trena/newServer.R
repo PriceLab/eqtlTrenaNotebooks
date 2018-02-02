@@ -21,8 +21,8 @@ handleMessage <- function(msg)
       response <- list(cmd=msg$callback, status="success", callback="", payload=tbl.summary.as.list)
       }
    else if(msg$cmd == "getGenomicBounds"){
-     print("dispatching getGenomicBounds, msg: ")
-      print(msg)
+      print("dispatching getGenomicBounds, msg: ")
+      #print(msg)
       asString = msg$payload
       result <- getGenomicBounds(mef2c.data, asString)
       response <- list(cmd=msg$callback, status="success", callback="", payload=result);
@@ -54,7 +54,6 @@ handleMessage <- function(msg)
          cache[[key]] <- tbl.reg
          tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.reg)
          payload <- list(tbl=tbl.fp.as.list, key=key)
-         print(payload)
          response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
          }
       } # getMotifsInRegion
@@ -174,7 +173,7 @@ handleMessage <- function(msg)
       found <- key %in% names(cache)
       tbl.retrieved <- cache[[key]]
       printf("retrieved tbl with dimensions %d, %d", nrow(tbl.retrieved), ncol(tbl.retrieved))
-      print(tbl.retrieved)
+      #print(tbl.retrieved)
       sum <- sum(as.matrix(tbl.retrieved))
       payload <- list(found=found, sum=sum)
       response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
@@ -185,11 +184,11 @@ handleMessage <- function(msg)
       solver.names <- payload$solverNames
       printf("---- createGeneModel about to extract tbl.motifs from cache")
       key <- payload$tblRegulatoryRegionsCacheKey
-      printf("    key: %s", key)
+      #printf("    key: %s", key)
       found <- key %in% names(cache)
-      printf("    found? %s", found)
+      #printf("    found? %s", found)
       tbl.motifs <- cache[[key]]
-      printf("    tbl.motifs: %d, %d", nrow(tbl.motifs), ncol(tbl.motifs))
+      #printf("    tbl.motifs: %d, %d", nrow(tbl.motifs), ncol(tbl.motifs))
       tfMap <- payload$tfMap
       stopifnot(all(c("targetGene", "matrixName") %in% names(msg$payload)))
       targetGene <- toupper(msg$payload$targetGene)
@@ -197,12 +196,12 @@ handleMessage <- function(msg)
       #tbl.motifs <- read.table("/home/trena/sharedData/tbl.bed", sep="\t", as.is=TRUE, stringsAsFactors=FALSE)
       tbl.motifs <- tbl.motifs[, 1:5]
       colnames(tbl.motifs) <- c("chrom", "start", "end", "motifName")
-      print(head(tbl.motifs))
+      #print(head(tbl.motifs))
       tbl.motifs$motifName <- sub("_well_16", "", tbl.motifs$motifName)
       tbl.motifs$motifName <- sub("_well_20", "", tbl.motifs$motifName)
       tbl.motifs$motifName <- sub("_hint_16", "", tbl.motifs$motifName)
       tbl.motifs$motifName <- sub("_hint_20", "", tbl.motifs$motifName)
-      print(head(tbl.motifs))
+      #print(head(tbl.motifs))
 
       tbl.motifs.tfs <- associateTranscriptionFactors(MotifDb, tbl.motifs, source=tfMap, expand.rows=FALSE)
       #print(head(tbl.motifs.tfs))
@@ -250,7 +249,7 @@ handleMessage <- function(msg)
       }
 
    print("--- about to leave handleMessage, response:")
-   print(response)
+   #print(response)
 
    response
 

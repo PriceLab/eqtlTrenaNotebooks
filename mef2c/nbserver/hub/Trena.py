@@ -146,26 +146,14 @@ class Trena:
                    "motifs": motif,
                    "matchScore": matchScore}
         msg = {'cmd': 'getMotifsInRegion', 'status': 'request', 'callback': '', 'payload': payload}
-        print(0)
         self.trenaServer.send_string(json.dumps(msg))
-        print(1)
         response = json.loads(self.trenaServer.recv_string())
-        print(2)
-        print(response)
-        print("back from trenaServer")
-        print(3)
         payload = response["payload"]
-        print(4)
-        #print(payload)
-        print(5)
         if(response["status"] != "success"):
            print("no motifs found in %s at match >= %d" % (self.getGenomicRegion(), matchScore))
            return()
-        print("found motifs")
         tblAsList = payload["tbl"]
         regTbl = self.dataFrameFrom3partList(tblAsList)
-        #print(regTbl)
-        #regTbl.key = payload["key"]
         if(display):
            tbl = regTbl[[0,1,2,3,4]]
            self.tv.addBedTrackFromDataFrame(tbl, motif, "SQUISHED", color, trackHeight=50)

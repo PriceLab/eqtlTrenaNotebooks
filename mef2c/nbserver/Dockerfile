@@ -8,6 +8,7 @@ COPY custom.css /home/jovyan/.jupyter/custom/
 
 RUN mkdir /home/jovyan/mef2c
 RUN mkdir /home/jovyan/mef2c/notebooks
+RUN mkdir /home/jovyan/mef2c/tmp
 
 RUN mkdir /home/jovyan/mef2c/hub
 COPY hub/* /home/jovyan/mef2c/hub/
