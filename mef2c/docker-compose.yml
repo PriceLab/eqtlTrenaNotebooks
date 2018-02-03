@@ -20,7 +20,7 @@ services:
       - type: volume
         source: sharedData
         target: /home/jovyan/mef2c/tmp
-#      - "./nbserver/notebooks:/home/jovyan/mef2c/notebooks"
+      - "/notebooks:/home/jovyan/mef2c/notebooks"
 
 volumes:
     sharedData:
