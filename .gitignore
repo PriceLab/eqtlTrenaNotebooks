@@ -34,3 +34,8 @@ vignettes/*.pdf
 *.knit.md
 
 devs/trns/geneHancer
+
+# notebook checkpoints
+.ipynb_checkpoints/
+
+junk

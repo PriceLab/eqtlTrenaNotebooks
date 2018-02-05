@@ -26,7 +26,8 @@ MEF2C.data = function()
        # all hint/wellington 16/20 footprints
        #--------------------------------------------------------------------------------
 
-   load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88615025-89052115.4sources.noDups.RData")) # tbl.fp
+  # load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88615025-89052115.4sources.noDups.RData")) # tbl.fp
+   load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88391000-89322000.4sources.noDups.RData")) #
 
        #--------------------------------------------------------------------------------
        # enhancers and their motifs
