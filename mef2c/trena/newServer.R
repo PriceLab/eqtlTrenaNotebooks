@@ -76,6 +76,22 @@ handleMessage <- function(msg)
         response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
         } # nrow(tbl.snp) > 0
       } # getVariants
+   else if(msg$cmd == "getWholeGenomeVariants"){
+      roiString <- msg$payload$roi
+      altToRefRatio  <- msg$payload$altToRefRatio
+      minAltCount <- msg$payload$minAltCount
+      tbl.variants <- getWholeGenomeVariantsForRegion(sga, roiString, altToRefRatio, minAltCount)
+      printf("whole genome tbl.variants: %d x %d", nrow(tbl.variants), ncol(tbl.variants))
+      if(nrow(tbl.variants) == 0){
+         response <- list(cmd=msg$callback, status="failure", callback="", payload="no variants in region");
+         }
+      else{
+        key <- as.character(as.numeric(Sys.time()) * 100000)
+        tbl.variants.as.list <- dataFrameToPandasFriendlyList(tbl.variants)
+        payload <- list(tbl=tbl.variants.as.list, key=key)
+        response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+        } # nrow(tbl.variants) > 0
+      } # getVariants
    else if(msg$cmd == "getDHSRegions"){
       stopifnot("roi" %in% names(msg$payload))
       thresholdScore <- msg$payload$minScore

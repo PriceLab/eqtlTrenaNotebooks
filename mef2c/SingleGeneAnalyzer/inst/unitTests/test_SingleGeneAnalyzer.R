@@ -16,6 +16,7 @@ runTests <- function()
    test_summarizeExpressionMatrices()
    test_getFootprintsForRegion()
    test_getVariantsForRegion()
+   test_getWholeGenomeVariantsForRegion()
    test_getDHSForRegion()
    test_getEnhancersForRegion()
    test_findMotifsInRegion()
@@ -65,14 +66,14 @@ test_getFootprintsForRegion <- function()
 
     roi.string <- "chr5:88,883,173-88,884,172"
     tbl.fp <- getFootprintsForRegion(sga, roi.string)  # uses default score.threshold of 10
-    checkEquals(dim(tbl.fp), c(216, 12))
+    checkEquals(dim(tbl.fp), c(869, 12))
        # make sure no filtering has taken place
     checkTrue(any(tbl.fp$score < 0))
     checkTrue(any(tbl.fp$score > 0))
 
        # use a strong filter
     tbl.fp <- getFootprintsForRegion(sga, roi.string, score.threshold=20.0)
-    checkEquals(dim(tbl.fp), c(17, 12))
+    checkEquals(dim(tbl.fp), c(25, 12))
     checkTrue(all(tbl.fp$score >= 20.0))
 
 } # test_getFootprintsForRegion
@@ -94,6 +95,27 @@ test_getVariantsForRegion <- function()
       # a region with no variants
     tbl.snp <- getVariantsForRegion(sga, "chr5:88,883,347-88,884,158")
     checkEquals(nrow(tbl.snp), 0)
+
+} # test_getVariantsForRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_getWholeGenomeVariantsForRegion <- function()
+{
+    printf("--- test_getWholeGenomeVariantsForRegion")
+
+    roi.string <- "chr5:88727837-88940643"
+
+       # use strong filters
+    tbl.var <- getWholeGenomeVariantsForRegion(sga, roi.string, altToRefRatio=2.5, minAltCount=10)
+    checkEquals(dim(tbl.var), c(2, 5))
+
+       # use weaker filter
+    tbl.var <- getWholeGenomeVariantsForRegion(sga, roi.string, altToRefRatio=1.5, minAltCount=5)
+    checkEquals(dim(tbl.var), c(46, 5))
+    checkTrue(all(tbl.var$score >= 1.5))
+
+      # a region and scores with no variants
+    tbl.var <- getWholeGenomeVariantsForRegion(sga, "chr5:88,883,347-88,884,158", 2, 20)
+    checkEquals(nrow(tbl.var), 0)
 
 } # test_getVariantsForRegion
 #------------------------------------------------------------------------------------------------------------------------

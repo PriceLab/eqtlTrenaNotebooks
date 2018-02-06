@@ -81,6 +81,22 @@ class Trena:
            self.tv.addBedTrackFromDataFrame(tbl, "variants >= %4.2f" % minScore, "SQUISHED", color, trackHeight)
         return(tbl)
 
+    def getWholeGenomeVariantsInRegion(self, altToRefRatio, minAltCount, display, color, trackHeight=50):
+        payload = {"roi": self.getGenomicRegion(),
+                   'altToRefRatio': altToRefRatio,
+                   'minAltCount': minAltCount}
+        msg = {'cmd': 'getWholeGenomeVariants', 'status': 'request', 'callback': '', 'payload': payload}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        payload = response["payload"]
+        tblAsList = payload["tbl"]
+        tbl = self.dataFrameFrom3partList(tblAsList)
+        tbl.key = payload["key"]
+        if(display):
+           self.tv.addBedTrackFromDataFrame(tbl, "wgs variants >= %4.1f, %4d" % (altToRefRatio, minAltCount),
+                                            "SQUISHED", color, trackHeight)
+        return(tbl)
+
     def getExpressionMatrixNames(self):
         msg = {'cmd': 'getExpressionMatrixNames', 'status': 'request', 'callback': '', 'payload': ''}
         self.trenaServer.send_string(json.dumps(msg))

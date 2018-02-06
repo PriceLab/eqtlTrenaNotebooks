@@ -11,6 +11,7 @@ exportMethods(
    summarizeExpressionMatrices,
    getFootprintsForRegion,
    getVariantsForRegion,
+   getWholeGenomeVariantsForRegion,
    getDHSForRegion,
    getEnhancersForRegion,
    findVariantsInModelForRegion,

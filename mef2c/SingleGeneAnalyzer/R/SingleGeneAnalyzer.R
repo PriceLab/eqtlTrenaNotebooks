@@ -16,11 +16,17 @@ setGeneric('getFootprintsForRegion', signature='obj', function(obj, roi.string, 
               standardGeneric ('getFootprintsForRegion'))
 setGeneric('getVariantsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
               standardGeneric ('getVariantsForRegion'))
+
+setGeneric('getWholeGenomeVariantsForRegion', signature='obj', function(obj, roi.string, altToRefRatio, minAltCount)
+              standardGeneric ('getWholeGenomeVariantsForRegion'))
+
 setGeneric('getDHSForRegion', signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
            signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
+
 setGeneric('findVariantsInModelForRegion', signature='obj',
            function(obj, roi.string, model.name, shoulder, tf.count=NA) standardGeneric ('findVariantsInModelForRegion'))
+
 setGeneric('findMotifsInRegion', signature='obj',
            function(obj, roi.string, motifs, pwmMatchPercentage, variants=NA_character)
               standardGeneric ('findMotifsInRegion'))
@@ -94,6 +100,15 @@ setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
           tbl.sub <- subset(tbl.sub, -log10(CER_P) >= score.threshold)
        return(tbl.sub)
        })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getWholeGenomeVariantsForRegion', 'SingleGeneAnalyzer',
+
+   function(obj, roi.string, altToRefRatio, minAltCount){
+      roi <- trena::parseChromLocString(roi.string)
+      tbl.variants <- getWholeGenomeVariants(obj@singleGeneData, roi, altToRefRatio, minAltCount)
+      invisible(tbl.variants)
+      })
 
 #----------------------------------------------------------------------------------------------------
 setMethod('getDHSForRegion', 'SingleGeneAnalyzer',
