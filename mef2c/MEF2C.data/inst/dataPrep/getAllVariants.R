@@ -21,5 +21,5 @@ mtx.012[which(mtx.geno=="0/1")] <- 1
 mtx.012[which(mtx.geno=="1/1")] <- 2
 mtx.geno <- mtx.012
 dim(mtx.geno)  # 5824 349
-
+sum(mtx.geno)  # [1] 299636
 

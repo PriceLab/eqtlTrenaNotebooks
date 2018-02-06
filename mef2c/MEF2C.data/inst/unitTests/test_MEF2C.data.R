@@ -14,6 +14,7 @@ runTests <- function()
    test_getExpressionMatrices()
    test_getFootprints()
    test_getModels()
+   test_getWholeGenomeVariants()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -47,7 +48,7 @@ test_getFootprints <- function()
 
     roi <- getGenomicBounds(mef2c)
     tbl.fp <- getFootprints(mef2c, roi)
-    checkEquals(dim(tbl.fp), c(13712, 12))
+    checkEquals(dim(tbl.fp), c(29397, 12))
 
 } # test_getFootprints
 #----------------------------------------------------------------------------------------------------
@@ -64,6 +65,22 @@ test_getModels <- function()
     checkTrue(all(lapply(model.list, nrow) > 5))
 
 } # test_getModels
+#----------------------------------------------------------------------------------------------------
+test_getWholeGenomeVariants <- function()
+{
+   printf("--- test_getWholeGenomeVariants")
+   roi <- getGenomicBounds(mef2c)
+   tbl <- getWholeGenomeVariants(mef2c, roi, altToRefRatio=2.5, minAltCount=10)
+   checkEquals(dim(tbl), c(6, 5))
+   checkEquals(lapply(tbl, class),
+               list(chrom="character",
+                    start="integer",
+                    end="integer",
+                    name="character",
+                    score="numeric"))
+   checkTrue(all(tbl$score >= 2.5))
+
+} # test_getWholeGenomeVariants
 #----------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

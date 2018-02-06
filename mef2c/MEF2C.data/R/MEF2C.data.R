@@ -8,6 +8,8 @@ setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) st
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
+setGeneric('getWholeGenomeVariants', signature='obj', function(obj, roi, altToRefRatio, minAltCount)
+              standardGeneric ('getWholeGenomeVariants'))
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
@@ -26,7 +28,6 @@ MEF2C.data = function()
        # all hint/wellington 16/20 footprints
        #--------------------------------------------------------------------------------
 
-  # load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88615025-89052115.4sources.noDups.RData")) # tbl.fp
    load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88391000-89322000.4sources.noDups.RData")) #
 
        #--------------------------------------------------------------------------------
@@ -53,6 +54,18 @@ MEF2C.data = function()
    load(system.file(package="MEF2C.data", "extdata", "mtx.tcx.pheno.geno.RData"))
    misc.data[["vcf.geno"]] <- tbl.geno
    misc.data[["pheno"]]    <- tbl.pheno
+      # now the vcf data for the bounds() region, reporting relative counts at each variant base.
+      # subset(tbl.pos, any.altAD > (2.5*any.altCTL) &  any.altAD > 10)[, c(1,2,5:10)]
+      #      chrom      pos het.altAD het.altCTL hom.altAD hom.altCTL any.altAD any.altCTL
+      # 108   chr5 88410266        11          3         1          0        12          3
+      # 1422  chr5 88599367        15          5         0          0        15          5
+      # 2622  chr5 88783554        13          4         0          1        13          5
+      # 2745  chr5 88799905        13          4         0          1        13          5
+      # 4082  chr5 89004814        13          4         0          0        13          4
+      # 5226  chr5 89208216         7          2         5          2        12          4
+
+   load(system.file(package="MEF2C.data", "extdata", "tbl.vcf.chr5.88391000.89322000.79AD.73CTL.RData"))
+   misc.data[["wgVariants"]] <- tbl.pos
 
        #--------------------------------------------------------------------------------
        # eqtl snps, from mayo.AD.collaboration/tbl.snp.hg38.score-ref-alt.RData
@@ -141,3 +154,26 @@ setMethod('getFootprints', 'MEF2C.data',
       }) # getFootprints
 
 #----------------------------------------------------------------------------------------------------
+setMethod('getWholeGenomeVariants', 'MEF2C.data',
+
+    function(obj, roi, altToRefRatio, minAltCount){
+      tbl.pos <- obj@misc.data[["wgVariants"]]
+      tbl.roi <- subset(tbl.pos, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
+      if(nrow(tbl.roi) == 0)
+         return(data.frame())
+
+      tbl.out <- subset(tbl.roi, any.altAD > (altToRefRatio * any.altCTL) & any.altAD > minAltCount)
+
+      if(nrow(tbl.out) == 0)
+         return(data.frame())
+      colnames(tbl.out)[grep("pos", colnames(tbl.out))] <- "start"
+      tbl.out$name <- with(tbl.out, sprintf("%d.%s.%s.%d.%d.%d.%d",
+                           start, het.altAD, het.altCTL, hom.altAD, hom.altCTL, any.altAD, any.altCTL))
+      tbl.out$score <- with(tbl.out, any.altAD/any.altCTL)
+      tbl.out$end <- tbl.out$start
+      tbl.out <- tbl.out[, c("chrom", "start", "end", "name", "score")]
+      tbl.out
+      }) # getWholeGenomeVariants
+
+#----------------------------------------------------------------------------------------------------
+
