@@ -82,12 +82,16 @@ class Trena:
         return(tbl)
 
     def getWholeGenomeVariantsInRegion(self, altToRefRatio, minAltCount, display, color, trackHeight=50):
-        payload = {"roi": self.getGenomicRegion(),
+        roi = self.getGenomicRegion()
+        payload = {"roi": roi,
                    'altToRefRatio': altToRefRatio,
                    'minAltCount': minAltCount}
         msg = {'cmd': 'getWholeGenomeVariants', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
+        if(response["status"] != "success"):
+           print("no variants found in region %s" % roi)
+           return(payload)
         payload = response["payload"]
         tblAsList = payload["tbl"]
         tbl = self.dataFrameFrom3partList(tblAsList)

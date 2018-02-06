@@ -117,6 +117,12 @@ test_getWholeGenomeVariantsForRegion <- function()
     tbl.var <- getWholeGenomeVariantsForRegion(sga, "chr5:88,883,347-88,884,158", 2, 20)
     checkEquals(nrow(tbl.var), 0)
 
+      # test a region - "chr1:1-248,956,422" - the default when a trena jupyter notebook starts up -
+      # for which there is no data (in the case of mef2c)
+    tbl.var <- getWholeGenomeVariantsForRegion(sga, "chr1:1-248,956,422", 0, 1)
+    checkEquals(nrow(tbl.var), 0)
+
+
 } # test_getVariantsForRegion
 #------------------------------------------------------------------------------------------------------------------------
 test_getDHSForRegion <- function()
