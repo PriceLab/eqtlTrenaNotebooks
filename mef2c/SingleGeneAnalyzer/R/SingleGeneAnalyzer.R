@@ -25,7 +25,9 @@ setGeneric('getEnhancersForRegion',
            signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
 
 setGeneric('findVariantsInModelForRegion', signature='obj',
-           function(obj, roi.string, model.name, shoulder, tf.count=NA) standardGeneric ('findVariantsInModelForRegion'))
+            function(obj, roi.string, motif.track, variants.track, candidate.tfs, tfMotifMappingName, shoulder=0)
+               standardGeneric ('findVariantsInModelForRegion'))
+
 
 setGeneric('findMotifsInRegion', signature='obj',
            function(obj, roi.string, motifs, pwmMatchPercentage, variants=NA_character)
@@ -168,33 +170,77 @@ setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
 #
 setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roi.string, model.name, shoulder, tf.count=NA){
-       stopifnot(model.name %in% names(getModels(obj@singleGeneData)))
+    function(obj, roi.string, motif.track, variants.track, candidate.tfs, tfMotifMappingName, shoulder=0){
 
        roi <- parseChromLocString(roi.string)
-       tbl.snps <- obj@singleGeneData@misc.data[["eqtl.snps"]]
-       tbl.snps <- subset(tbl.snps, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
-       rsids <- tbl.snps$rsid
+       stopifnot(variants.track %in% c("eqtl.snps", "wgVariants"))
+       stopifnot(tfMotifMappingName %in% c("MotifDb", "TFClass"))
+       stopifnot(motif.track %in% c("DHS.motifs", "footprints", "enhancer.motifs", "allDNA.motifs"))
 
-       tfs <- tbl.model$gene
-       if(!is.na(tf.count)){
-          count <- min(length(tfs), tf.count)
-          tfs <- head(tfs, n=count)
-          }
-
-       lookup <- function(gene){
-          tbl.mdb <- geneToMotif(MotifDb, gene, "MotifDb", ignore.case=TRUE)
-          tbl.tfc <- geneToMotif(MotifDb, gene, "TFClass", ignore.case=TRUE)
-          motifs <- unique(c(tbl.mdb$motif, tbl.tfc$motif))
-          motifs <- grep("^MA", motifs, value=TRUE)
-          motifs
-          }
-
-       tf.motifs <- lapply(tfs, lookup)
-       names(tf.motifs) <- tfs
        browser()
-       xyz <- 99
-       })
+       tbl.motifs <- switch(motif.track,
+           "footprints" = obj@singleGeneData@tbl.fp,
+           "enhancer.motifs" =
+               {tbl.tmp <- obj@singleGeneData@misc.data$enhancer.motifs.mdb;
+                tbl.tmp <- tbl.tmp[, c("chrom", "motifStart", "motifEnd", "motifName", "motifRelativeScore", "strand", "geneSymbol")];
+                colnames(tbl.tmp) <- c("chrom", "start", "end", "name", "score", "strand", "geneSymbol");
+                rownames(tbl.tmp) <- NULL;
+                printf("enhancer.motifs: %d rows, %d geneSymbols", nrow(tbl.tmp), length(unique(tbl.tmp$geneSymbol)))
+                tbl.motifs <- tbl.tmp
+                },
+           "allDNA.motifs" = NA,
+           "DHS.motifs" =
+              {tbl.tmp <- obj@singleGeneData@misc.data$tbl.dhsMotifs
+               shortMotifNames <- unlist(lapply(tbl.tmp$motifName,
+                               function(name) {tokens <- strsplit(name, "-")[[1]]; return(tokens[length(tokens)])}))
+               tbl.tmp$shortMotif <- shortMotifNames
+               tbl.tmp <- associateTranscriptionFactors(MotifDb, tbl.tmp, tfMotifMappingName, expand.rows=TRUE)
+               tbl.tmp <- tbl.tmp[, c("chrom", "motifStart", "motifEnd", "motifName", "score", "strand", "geneSymbol")];
+               colnames(tbl.tmp) <- c("chrom", "start", "end", "name", "score", "strand", "geneSymbol");
+               rownames(tbl.tmp) <- NULL;
+               printf("DHS.motifs: %d rows, %d geneSymbols", nrow(tbl.tmp), length(unique(tbl.tmp$geneSymbol)))
+               tbl.motifs <- tbl.tmp
+               }
+            ) # switch on motif.track
+
+       tbl.snps <- switch(variants.track,
+          "eqtl.snps" = {
+               tbl.tmp <- obj@singleGeneData@misc.data[["eqtl.snps"]][, c("chrom", "pos", "pos", "rsid", "score")];
+               colnames(tbl.tmp) <- c("chrom", "start", "end", "rsid", "score")
+               tbl.snps <- tbl.tmp
+               },
+          "wgVariants" = {
+               tbl.tmp <- obj@singleGeneData@misc.data[["wgVariants"]]
+               tbl.tmp$end <- tbl.tmp$pos;
+               colnames.ordered <- c("chrom","pos","end","ref","alt","het.altAD","het.altCTL",
+                                     "hom.altAD","hom.altCTL","any.altAD","any.altCTL")
+               tbl.tmp <- tbl.tmp[, colnames.ordered]
+               colnames(tbl.tmp)[2] <- "start"
+               tbl.snps <- tbl.tmp
+               }
+           ) # switch on variants.track
+
+          # find all motifs which intersect with the roi
+       browser()
+
+       gr.roi <- GRanges(as.data.frame(roi, stringsAsFactors=FALSE))
+       gr.motifs <- GRanges(tbl.motifs[, 1:3])
+       tbl.ov <- as.data.frame(findOverlaps(gr.roi, gr.motifs, type="any"))
+       colnames(tbl.ov) <- c("roi", "motif")
+       tbl.motifs <- tbl.motifs[tbl.ov$motif,]
+
+       gr.motifs.roi <- GRanges(tbl.motifs)
+       gr.snps <- GRanges(tbl.snps)
+       tbl.ov <- as.data.frame(findOverlaps(gr.motifs.roi, gr.snps, type="any"))
+       if(nrow(tbl.ov) == 0)
+          return(data.frame())
+
+       colnames(tbl.ov) <- c("motif", "snp")
+       tbl.snpsInMotif.roi <- tbl.snps[tbl.ov$snp,]
+       tbl.motifs.roi <- tbl.motifs[tbl.ov$motif,]
+       tbl.snpsMotifs <- cbind(tbl.snpsInMotif.roi, tbl.motifs.roi)
+       subset(tbl.snpsMotifs, geneSymbol %in% candidate.tfs)
+       }) # findVariantsInModelForRegion
 
 #----------------------------------------------------------------------------------------------------
 

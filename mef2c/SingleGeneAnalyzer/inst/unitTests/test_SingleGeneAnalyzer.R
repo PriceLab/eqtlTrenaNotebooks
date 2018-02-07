@@ -20,7 +20,7 @@ runTests <- function()
    test_getDHSForRegion()
    test_getEnhancersForRegion()
    test_findMotifsInRegion()
-   #test_findVariantsInModelForRegion()
+   test_findVariantsInModelForRegion()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -179,9 +179,61 @@ test_findVariantsInModelForRegion <- function()
    printf("--- findVariantsInModelForRegion")
    roi.string <- "chr5:88,821,191-88,821,221"    # includes rs244761, first intro variant, Chromosome: 5:88821210
                                                  #    GCTAATAATTGAATATCTTTTCTTT[A/T]TTTATATATAGTTGCAGCTACAGTG
-   pfms <- as.list(query(query(MotifDb, "jaspar2018"), "sapiens"))
-   model.name <- "mef2c.cory.wgs.tcx.tfClass"
-   tbl <- findVariantsInModelForRegion(sga, roi.string, model.name, shoulder=0, tf.count=5)
+   roi.string <- "chr5:88,882,292-88,889,457"
+   tfs.from.all.models <- unique(unlist(lapply(sga@singleGeneData@models, function(tbl) tbl$gene), use.names=FALSE))
+
+   tbl.1 <- findVariantsInModelForRegion(sga,
+                                         roi.string,
+                                         motif.track="footprints",
+                                         variants.track="eqtl.snps",
+                                         candidate.tfs=tfs.from.all.models,
+                                         tfMotifMappingName="MotifDb",
+                                         shoulder=0)
+   checkTrue(nrow(tbl.1) > 10)
+   tfs <- sort(unique(tbl.1$geneSymbol))
+   checkEquals(tfs, c("SP3", "SP4", "SP8", "ZIC1", "ZNF740"))
+
+   tbl.2 <- findVariantsInModelForRegion(sga,
+                                         roi.string,
+                                         motif.track="enhancer.motifs",
+                                         variants.track="wgVariants",
+                                         candidate.tfs=tfs.from.all.models,
+                                         tfMotifMappingName="MotifDb",
+                                         shoulder=0)
+   tfs.2 <- sort(unique(tbl.2$geneSymbol))
+   checkEquals(tfs.2, c("BARHL2", "CUX2", "DLX6", "FOXO6", "LBX2", "MEF2A", "MEF2D", "SP3", "ZNF740"))
+
+   tbl.3 <- findVariantsInModelForRegion(sga,
+                                         roi.string,
+                                         motif.track="DHS.motifs",
+                                         variants.track="wgVariants",
+                                         candidate.tfs=tfs.from.all.models,
+                                         tfMotifMappingName="MotifDb",
+                                         shoulder=0)
+   tfs.3 <- sort(unique(tbl.3$geneSymbol))
+   checkEquals(tfs.2, c("BARHL2", "CUX2", "DLX6", "FOXO6", "LBX2", "MEF2A", "MEF2D", "SP3", "ZNF740"))
+
+   tbl.4 <- findVariantsInModelForRegion(sga,
+                                         roi.string,
+                                         motif.track="DHS.motifs",
+                                         variants.track="eqtl.snps",
+                                         candidate.tfs=tfs.from.all.models,
+                                         tfMotifMappingName="MotifDb",
+                                         shoulder=0)
+   tfs.4 <- sort(unique(tbl.4$geneSymbol))
+   checkTrue(nrow(tbl.4) >= 2)
+   checkEquals(tfs.4, c("SP3", "ZNF740"))
+
+   tbl.5 <- findVariantsInModelForRegion(sga,
+                                         roi.string,
+                                         motif.track="DHS.motifs",
+                                         variants.track="eqtl.snps",
+                                         candidate.tfs=tfs.from.all.models,
+                                         tfMotifMappingName="TFClass",
+                                         shoulder=0)
+   tfs.5 <- sort(unique(tbl.5$geneSymbol))
+   checkTrue(nrow(tbl.5) >= 20)
+   checkEquals(tfs.5, c("EGR3", "ELK4", "KLF13", "SP3", "SP4", "SP8", "SP9", "STAT4", "ZNF740"))
 
 } # test_findVariantsInModel
 #------------------------------------------------------------------------------------------------------------------------
