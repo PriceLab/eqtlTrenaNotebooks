@@ -158,7 +158,7 @@ setMethod('getWholeGenomeVariants', 'MEF2C.data',
 
     function(obj, roi, altToRefRatio, minAltCount){
       tbl.pos <- obj@misc.data[["wgVariants"]]
-      tbl.roi <- subset(tbl.pos, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
+      tbl.roi <- subset(tbl.pos, chrom==roi$chrom & start >= roi$start & end <= roi$end)
       if(nrow(tbl.roi) == 0)
          return(data.frame())
 
@@ -166,11 +166,9 @@ setMethod('getWholeGenomeVariants', 'MEF2C.data',
 
       if(nrow(tbl.out) == 0)
          return(data.frame())
-      colnames(tbl.out)[grep("pos", colnames(tbl.out))] <- "start"
       tbl.out$name <- with(tbl.out, sprintf("%d.%s.%s.%d.%d.%d.%d",
                            start, het.altAD, het.altCTL, hom.altAD, hom.altCTL, any.altAD, any.altCTL))
       tbl.out$score <- with(tbl.out, any.altAD/any.altCTL)
-      tbl.out$end <- tbl.out$start
       tbl.out <- tbl.out[, c("chrom", "start", "end", "name", "score")]
       tbl.out
       }) # getWholeGenomeVariants

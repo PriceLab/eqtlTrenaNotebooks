@@ -231,9 +231,11 @@ test_findVariantsInModelForRegion <- function()
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="TFClass",
                                          shoulder=0)
+
+      # note especially more predicted tfs from TFClass mapping
    tfs.5 <- sort(unique(tbl.5$geneSymbol))
-   checkTrue(nrow(tbl.5) >= 20)
-   checkEquals(tfs.5, c("EGR3", "ELK4", "KLF13", "SP3", "SP4", "SP8", "SP9", "STAT4", "ZNF740"))
+   checkTrue(nrow(tbl.5) >= 5)
+   checkEquals(tfs.5, c("EGR3", "ELK4", "SP3", "STAT4", "ZNF740"))
 
 } # test_findVariantsInModel
 #------------------------------------------------------------------------------------------------------------------------

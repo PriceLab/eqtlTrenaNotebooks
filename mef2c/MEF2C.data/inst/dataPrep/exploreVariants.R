@@ -113,6 +113,20 @@ preferred.colname.order <- c("chrom", "pos", "end", "RefSNP_id", "ref","alt","he
 
 tbl.pos <- tbl.posMerged[, preferred.colname.order]
 colnames(tbl.pos)[2] <- "start"
+colnames(tbl.pos)[4] <- "id"
+
+no.rsid <- which(is.na(tbl.pos$id))   # 1335
+faux.rsid <- unlist(lapply(no.rsid, function(row) with(tbl.pos[row,], sprintf("%s:%d:%s/%s", chrom, start, ref, alt))))
+tbl.pos$id[no.rsid] <- faux.rsid
+
+# the strand is all *, conveying no information, and collides with strand from mapped motifs
+# with which these variants are combined downstream: get rid of it
+
+strand.column <- grep("strand", colnames(tbl.pos))
+if(length(strand.column) > 0)
+   tbl.pos <- tbl.pos[, -strand.column]
+
+
 save(tbl.pos, file="tbl.vcf.chr5.88391000.89322000.79AD.73CTL.RData")
 save(tbl.pos, file="../extdata/tbl.vcf.chr5.88391000.89322000.79AD.73CTL.RData")
 
