@@ -1,4 +1,6 @@
 library(VariantAnnotation)
+library(SNPlocs.Hsapiens.dbSNP150.GRCh38)
+snps <- SNPlocs.Hsapiens.dbSNP150.GRCh38
 vcf.filename <- "~/github/projects/priceLab/cory/mef2c-vcf/SCH_11923_B01_GRM_WGS_2017-04-27_5.recalibrated_variants.vcf.gz"
 file.exists(vcf.filename)
 
@@ -100,6 +102,17 @@ tbl.pos$pos <- as.integer(hg38.pos)
 tbl.pos$ref <- as.character(tbl.pos$ref)
 tbl.pos$alt <- as.character(tbl.pos$alt)
 
+gr.pos <- GRanges(seqnames=sub("chr", "", tbl.pos$chrom), IRanges(start=tbl.pos$pos, end=tbl.pos$pos))
+tbl.ov <- as.data.frame(snpsByOverlaps(snpLocs, gr.pos))
+
+tbl.posMerged  <- merge(tbl.pos, tbl.ov, by="pos", all.x=TRUE)
+tbl.posMerged$end <- tbl.posMerged$pos
+
+preferred.colname.order <- c("chrom", "pos", "end", "RefSNP_id", "ref","alt","het.altAD","het.altCTL","hom.altAD","hom.altCTL",
+                             "any.altAD","any.altCTL","seqnames","strand", "alleles_as_ambig")
+
+tbl.pos <- tbl.posMerged[, preferred.colname.order]
+colnames(tbl.pos)[2] <- "start"
 save(tbl.pos, file="tbl.vcf.chr5.88391000.89322000.79AD.73CTL.RData")
 save(tbl.pos, file="../extdata/tbl.vcf.chr5.88391000.89322000.79AD.73CTL.RData")
 
