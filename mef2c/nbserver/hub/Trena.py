@@ -179,7 +179,7 @@ class Trena:
         regTbl = self.dataFrameFrom3partList(tblAsList)
         regTbl.key = payload["key"]
         if(display):
-           self.tv.addBedTrackFromDataFrame(regTbl, "Enhancers", "SQUISHED", color=color, trackHeight=trackHeigth)
+           self.tv.addBedTrackFromDataFrame(regTbl, "Enhancers", "SQUISHED", color=color, trackHeight=trackHeight)
         return(regTbl)
 
     def getMotifsInRegion(self, motif, matchScore, display, color="blue"):
