@@ -131,18 +131,21 @@ handleMessage <- function(msg)
       response <- list(cmd=msg$callback, status="success", callback="", payload=info)
       }
    else if(msg$cmd == "getModelNames"){
-      info <- sort(mef2c.model.names)
-      response <- list(cmd=msg$callback, status="success", callback="", payload=info)
+      model.names <- getRegulatoryModelNames(sga)
+      printf("model.names: %s", paste(model.names, collapse=", "))
+      response <- list(cmd=msg$callback, status="success", callback="", payload=model.names)
       }
    else if(msg$cmd == "getModel"){
       modelName <- msg$payload
-      key <- as.character(as.numeric(Sys.time()) * 100000)
-      tbl <- gene.models[[modelName]]
-      cache[[key]] <- tbl
-      tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl)
-      payload <- list(tbl=tbl.fp.as.list, key=key)
-      response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
-      }
+      tbl <- getRegulatoryModel(sga, modelName)
+      response <- list(cmd=msg$callback, status="failure", callback="",
+                       payload=sprintf("model '%s' not found", modelName))
+      if(nrow(tbl) > 0){
+         tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl)
+         payload <- list(tbl=tbl.fp.as.list)
+         response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+         } # if rows in tbl
+      } # getModel
    else if(msg$cmd == "getDHSMotifsInRegion"){
       stopifnot("roi" %in% names(msg$payload))
       roi <- msg$payload$roi
@@ -158,6 +161,38 @@ handleMessage <- function(msg)
          response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
          }
       } # getDHSMotifsInRegion
+   else if(msg$cmd == "findVariantsInModelForRegion"){
+       printf("executing **findVariantsInModelForRegion**")
+       stopifnot("roi" %in% names(msg$payload))
+       stopifnot("motifTrack" %in% names(msg$payload))
+       stopifnot("variantsTrack" %in% names(msg$payload))
+       stopifnot("candidateTFs" %in% names(msg$payload))
+       stopifnot("tfMotifMappingName" %in% names(msg$payload))
+       stopifnot("shoulder" %in% names(msg$payload))
+       response <- list(cmd=msg$callback, status="failure", callback="", payload="no variants in tf motifs in region");
+       printf("about to call sga method")
+       with(msg$payload, {
+         printf("--- roi: %s", roi)
+         printf("    motif.track: %s", motifTrack)
+         printf("    variants.track: %s", variantsTrack)
+         printf("    tfs: %s", paste(candidateTFs, collapse=", "))
+         printf("    mapper: %s", tfMotifMappingName)
+         printf("    shoulder: %d", shoulder)
+         })
+       tbl.var <- with(msg$payload, findVariantsInModelForRegion(sga,
+                                              roi.string=roi,
+                                              motif.track=motifTrack,
+                                              variants.track=variantsTrack,
+                                              candidate.tfs=candidateTFs,
+                                              tfMotifMappingName=tfMotifMappingName,
+                                              shoulder=shoulder))
+      printf("findVariantsInModelForRegion, row count: %d", nrow(tbl.var))
+      if(nrow(tbl.var) > 0){
+         tbl.as.list <- dataFrameToPandasFriendlyList(tbl.var)
+         payload <- list(tbl=tbl.as.list)
+         response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+         } # if success
+      } # findVariantsInModelForRegion
    else if(msg$cmd == "findVariantsInModel"){
       stopifnot("modelName" %in% names(msg$payload))
       stopifnot("shoulder" %in% names(msg$payload))

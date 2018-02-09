@@ -12,6 +12,9 @@
 PORT <- 5548
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('summarizeExpressionMatrices', signature='obj', function(obj) standardGeneric ('summarizeExpressionMatrices'))
+setGeneric('getRegulatoryModelNames', signature='obj', function(obj) standardGeneric ('getRegulatoryModelNames'))
+setGeneric('getRegulatoryModel', signature='obj', function(obj, modelName) standardGeneric ('getRegulatoryModel'))
+
 setGeneric('getFootprintsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
               standardGeneric ('getFootprintsForRegion'))
 setGeneric('getVariantsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
@@ -27,7 +30,6 @@ setGeneric('getEnhancersForRegion',
 setGeneric('findVariantsInModelForRegion', signature='obj',
             function(obj, roi.string, motif.track, variants.track, candidate.tfs, tfMotifMappingName, shoulder=0)
                standardGeneric ('findVariantsInModelForRegion'))
-
 
 setGeneric('findMotifsInRegion', signature='obj',
            function(obj, roi.string, motifs, pwmMatchPercentage, variants=NA_character)
@@ -78,6 +80,21 @@ setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
        tbl.mtx
        })
 
+#----------------------------------------------------------------------------------------------------
+setMethod('getRegulatoryModelNames', 'SingleGeneAnalyzer',
+       function(obj){
+          return(names(getModels(obj@singleGeneData)))
+       })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getRegulatoryModel', 'SingleGeneAnalyzer',
+      function(obj, modelName){
+
+         tbl <- data.frame()
+         if(modelName %in% getRegulatoryModelNames(obj))
+            tbl <- getModels(obj@singleGeneData)[[modelName]]
+         return(tbl)
+         })
 #----------------------------------------------------------------------------------------------------
 setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
 
@@ -252,7 +269,7 @@ setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
        #tbl.motifs <- tbl.motifs[tbl.ov$motif,]
 
        gr.motifs.roi <- GRanges(tbl.motifs)
-       gr.snps <- GRanges(seqnames=tbl.snps$chrom, IRanges(start=tbl.snps$start, end=tbl.snps$end))
+       gr.snps <- GRanges(seqnames=tbl.snps$chrom, IRanges(start=tbl.snps$start-shoulder, end=tbl.snps$end+shoulder))
        tbl.ov <- as.data.frame(findOverlaps(gr.motifs.roi, gr.snps, type="any"))
        if(nrow(tbl.ov) == 0)
           return(data.frame())

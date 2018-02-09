@@ -62,10 +62,12 @@ class Trena:
         msg = {'cmd': 'getModel', 'status': 'request', 'callback': '', 'payload': name}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
+        if(response["status"] != "success"):
+           print("no model found with name '%s'" % name)
+           return(payload)
         payload = response["payload"]
         tblAsList = payload["tbl"]
         tbl = self.dataFrameFrom3partList(tblAsList)
-        tbl.key = payload["key"]
         return(tbl)
 
     def getVariants(self, minScore, display, color, trackHeight=50):
@@ -79,6 +81,25 @@ class Trena:
         tbl.key = payload["key"]
         if(display):
            self.tv.addBedTrackFromDataFrame(tbl, "variants >= %4.2f" % minScore, "SQUISHED", color, trackHeight)
+        return(tbl)
+
+    def findVariantsInModel(self, motifTrack, variantsTrack, candidateTFs, tfMotifMappingName, shoulder):
+        roi = self.getGenomicRegion()
+        payload = {"roi": roi,
+                   'motifTrack': motifTrack,
+                   'variantsTrack': variantsTrack,
+                   'candidateTFs': candidateTFs,
+                   'tfMotifMappingName': tfMotifMappingName,
+                   'shoulder': shoulder}
+        msg = {'cmd': 'findVariantsInModelForRegion', 'status': 'request', 'callback': '', 'payload': payload}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        if(response["status"] != "success"):
+           print("no variants in model in region %s" % roi)
+           return(payload)
+        payload = response["payload"]
+        tblAsList = payload["tbl"]
+        tbl = self.dataFrameFrom3partList(tblAsList)
         return(tbl)
 
     def getWholeGenomeVariantsInRegion(self, altToRefRatio, minAltCount, display, color, trackHeight=50):
@@ -194,19 +215,18 @@ class Trena:
            self.tv.addBedTrackFromDataFrame(regTbl, "DHS motifs", "SQUISHED", "magenta", trackHeight=50)
         return(regTbl)
 
-    def findVariantsInModel(self, modelName, shoulder, display):
-        payload = {"modelName": modelName, "shoulder": shoulder};
-        msg = {'cmd': 'findVariantsInModel', 'status': 'request', 'callback': '', 'payload': payload}
-        self.trenaServer.send_string(json.dumps(msg))
-        response = json.loads(self.trenaServer.recv_string())
-        payload = response["payload"]
-
-        tblAsList = payload["tbl"]
-        varTbl = self.dataFrameFrom3partList(tblAsList)
-        varTbl.key = payload["key"]
-        if(display):
-           self.tv.addBedTrackFromDataFrame(varTbl.loc[:, ['chrom', 'pos', 'pos', 'rsid']], "voi", "SQUISHED", "darkred")
-        return(varTbl)
+    #def findVariantsInModel(self, modelName, shoulder, display):
+    #    payload = {"modelName": modelName, "shoulder": shoulder};
+    #    msg = {'cmd': 'findVariantsInModel', 'status': 'request', 'callback': '', 'payload': payload}
+    #    self.trenaServer.send_string(json.dumps(msg))
+    #    response = json.loads(self.trenaServer.recv_string())
+    #    payload = response["payload"]
+    #    tblAsList = payload["tbl"]
+    #    varTbl = self.dataFrameFrom3partList(tblAsList)
+    #    varTbl.key = payload["key"]
+    #    if(display):
+    #       self.tv.addBedTrackFromDataFrame(varTbl.loc[:, ['chrom', 'pos', 'pos', 'rsid']], "voi", "SQUISHED", "darkred")
+    #    return(varTbl)
 
     def displayFootprints(self, url):
         self.tv.addBedTrackFromDataFrame(url)

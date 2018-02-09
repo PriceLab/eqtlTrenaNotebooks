@@ -9,6 +9,8 @@ export(
 
 exportMethods(
    summarizeExpressionMatrices,
+   getRegulatoryModelNames,
+   getRegulatoryModel,
    getFootprintsForRegion,
    getVariantsForRegion,
    getWholeGenomeVariantsForRegion,

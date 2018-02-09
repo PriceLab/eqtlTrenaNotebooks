@@ -14,6 +14,7 @@ runTests <- function()
 {
    test_dataFrameToPandasFriendlyList()
    test_summarizeExpressionMatrices()
+   test_getRegulatoryModel()
    test_getFootprintsForRegion()
    test_getVariantsForRegion()
    test_getWholeGenomeVariantsForRegion()
@@ -59,6 +60,23 @@ test_summarizeExpressionMatrices <- function()
     checkTrue(all(tbl.summary$max > 0))
 
 } # test_summarizeExpressionMatrices
+#------------------------------------------------------------------------------------------------------------------------
+test_getRegulatoryModel <- function()
+{
+   printf("--- test_getRegulatoryModel")
+   names <- getRegulatoryModelNames(sga)
+   checkTrue(length(names) > 0)
+   checkTrue(nchar(names[1]) > 0)
+
+   tbl <- getRegulatoryModel(sga, names[1])
+   checkEquals(class(tbl), "data.frame")
+   checkTrue(nrow(tbl) > 10)
+   checkTrue(ncol(tbl) > 10)
+
+   tbl.empty <- getRegulatoryModel(sga, "bogus")
+   checkEquals(tbl.empty, data.frame())
+
+} # test_getRegulatoryModel
 #------------------------------------------------------------------------------------------------------------------------
 test_getFootprintsForRegion <- function()
 {
@@ -232,12 +250,34 @@ test_findVariantsInModelForRegion <- function()
                                          tfMotifMappingName="TFClass",
                                          shoulder=0)
 
-      # note especially more predicted tfs from TFClass mapping
+      # note especially that there are more predicted tfs from TFClass mapping
    tfs.5 <- sort(unique(tbl.5$geneSymbol))
    checkTrue(nrow(tbl.5) >= 5)
    checkEquals(tfs.5, c("EGR3", "ELK4", "SP3", "STAT4", "ZNF740"))
+      # with shoulder of 0, all snps should be directly within a motif
+   snps.in.motifs <- unlist(with(tbl.5, lapply(seq_len(nrow(tbl.5)),
+                                               function(r) start[r] %in% motifStart[r]:motifEnd[r])))
+   checkTrue(all(snps.in.motifs))
 
-} # test_findVariantsInModel
+      # now expand the number of eqtl.snps found by setting a generous shoulder
+
+   tbl.6 <- findVariantsInModelForRegion(sga,
+                                         roi.string,
+                                         motif.track="DHS.motifs",
+                                         variants.track="eqtl.snps",
+                                         candidate.tfs=tfs.from.all.models,
+                                         tfMotifMappingName="TFClass",
+                                         shoulder=10)
+
+      # note especially that there are more predicted tfs from TFClass mapping
+   tfs.6 <- sort(unique(tbl.6$geneSymbol))
+      # with shoulder of 10, not all snps should be directly within a motif
+   snps.in.motifs <- unlist(with(tbl.6, lapply(seq_len(nrow(tbl.6)),
+                                               function(r) start[r] %in% motifStart[r]:motifEnd[r])))
+   checkTrue(any(snps.in.motifs))
+   checkTrue(!all(snps.in.motifs))
+
+} # test_findVariantsInModelForRegion
 #------------------------------------------------------------------------------------------------------------------------
 doofus <- function(tf="FOXP1")
 {
