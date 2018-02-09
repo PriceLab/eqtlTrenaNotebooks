@@ -166,7 +166,7 @@ class Trena:
            self.tv.addBedTrackFromDataFrame(regTbl, "DHS", "SQUISHED", "darkreen", trackHeight=50)
         return(regTbl)
 
-    def getEnhancersInRegion(self, display):
+    def getEnhancersInRegion(self, display, color="darkgreen", trackHeight=50):
         payload = {"roi": self.getGenomicRegion()}
         msg = {'cmd': 'getEnhancers', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
@@ -179,7 +179,7 @@ class Trena:
         regTbl = self.dataFrameFrom3partList(tblAsList)
         regTbl.key = payload["key"]
         if(display):
-           self.tv.addBedTrackFromDataFrame(regTbl, "Enhancers", "SQUISHED", "darkgreen", trackHeight=50)
+           self.tv.addBedTrackFromDataFrame(regTbl, "Enhancers", "SQUISHED", color=color, trackHeight=trackHeigth)
         return(regTbl)
 
     def getMotifsInRegion(self, motif, matchScore, display, color="blue"):

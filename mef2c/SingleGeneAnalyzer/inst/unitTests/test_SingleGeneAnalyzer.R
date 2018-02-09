@@ -165,6 +165,7 @@ test_getEnhancersForRegion <- function()
 {
     printf("--- test_getEnhancersForRegion")
 
+    roi.string <- "chr5:88,391,000-89,322,000" # the current bounds on mef2c
     roi.string <- "chr5:88727837-88940643"
 
     tbl <- getEnhancersForRegion(sga, roi.string)

@@ -28,7 +28,7 @@ RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/trena_1.1.12.tar.gz
 RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/trenaViz_0.99.39.tar.gz
 RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/SingleGeneData_0.99.2.tar.gz
 RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/MEF2C.data_0.99.7.tar.gz
-RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/SingleGeneAnalyzer_0.99.13.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/SingleGeneAnalyzer_0.99.14.tar.gz
 RUN R CMD INSTALL  --no-test-load /home/trena/pkgs/MotifDb_1.21.2.tar.gz
 
 CMD ["R", "-f", "newServer.R"]
