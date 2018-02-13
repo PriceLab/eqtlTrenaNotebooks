@@ -13,7 +13,6 @@ exportMethods(
    getRegulatoryModel,
    getFootprintsForRegion,
    getVariantsForRegion,
-   getWholeGenomeVariantsForRegion,
    getDHSForRegion,
    getEnhancersForRegion,
    findVariantsInModelForRegion,

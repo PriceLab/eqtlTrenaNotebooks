@@ -20,6 +20,10 @@ setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGener
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric('getEnhancers'))
 setGeneric('getModels', signature='obj', function(obj) standardGeneric('getModels'))
+setGeneric('getVariants', signature='obj', function(obj, source.name, roi, score.1.threshold=NA_real_,
+                                    score.2.threshold=NA_real, score.3.threshold=NA_real_) standardGeneric ('getVariants'))
+
+
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneData <- function(chrom, start, end, tbl.fp, expression.matrices, models, misc.data)
 {

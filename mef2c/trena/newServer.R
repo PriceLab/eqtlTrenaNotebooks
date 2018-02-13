@@ -15,6 +15,8 @@ cache <- new.env(parent=emptyenv())
 #------------------------------------------------------------------------------------------------------------------------
 handleMessage <- function(msg)
 {
+   printf("incoming message '%s' at %s", msg$cmd, date())
+
    if(msg$cmd == "summarizeExpressionMatrices"){
       tbl.summary <- summarizeExpressionMatrices(sga)
       tbl.summary.as.list <- dataFrameToPandasFriendlyList(tbl.summary)

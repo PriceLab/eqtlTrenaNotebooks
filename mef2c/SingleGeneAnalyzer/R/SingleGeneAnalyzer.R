@@ -17,18 +17,15 @@ setGeneric('getRegulatoryModel', signature='obj', function(obj, modelName) stand
 
 setGeneric('getFootprintsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
               standardGeneric ('getFootprintsForRegion'))
-setGeneric('getVariantsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
+setGeneric('getVariantsForRegion', signature='obj', function(obj, source.name, roi.string,
+                  score.1.threshold=NA_real_, score.2.threshold=NA_real, score.3.threshold=NA_real_)
               standardGeneric ('getVariantsForRegion'))
-
-setGeneric('getWholeGenomeVariantsForRegion', signature='obj', function(obj, roi.string, altToRefRatio, minAltCount)
-              standardGeneric ('getWholeGenomeVariantsForRegion'))
-
 setGeneric('getDHSForRegion', signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
            signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
 
 setGeneric('findVariantsInModelForRegion', signature='obj',
-            function(obj, roi.string, motif.track, variants.track, candidate.tfs, tfMotifMappingName, shoulder=0)
+            function(obj, roi.string, motif.track, variants.source, candidate.tfs, tfMotifMappingName, shoulder=0)
                standardGeneric ('findVariantsInModelForRegion'))
 
 setGeneric('findMotifsInRegion', signature='obj',
@@ -111,21 +108,14 @@ setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roi.string, score.threshold=NA){
-       roi <- trena::parseChromLocString(roi.string)
-       tbl.all <- obj@singleGeneData@misc.data[["eqtl.snps"]]
-       tbl.sub <- subset(tbl.all, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
-       if(!is.na(score.threshold) & nrow(tbl.sub) > 0)
-          tbl.sub <- subset(tbl.sub, -log10(CER_P) >= score.threshold)
-       return(tbl.sub)
-       })
+   function(obj, source.name, roi.string, score.1.threshold=NA_real_,
+            score.2.threshold=NA_real_, score.3.threshold=NA_real_){
 
-#----------------------------------------------------------------------------------------------------
-setMethod('getWholeGenomeVariantsForRegion', 'SingleGeneAnalyzer',
-
-   function(obj, roi.string, altToRefRatio, minAltCount){
       roi <- trena::parseChromLocString(roi.string)
-      tbl.variants <- getWholeGenomeVariants(obj@singleGeneData, roi, altToRefRatio, minAltCount)
+      tbl.variants <- getVariants(obj@singleGeneData, source.name, roi,
+                                  score.1.threshold=score.1.threshold,
+                                  score.2.threshold=score.2.threshold,
+                                  score.3.threshold=score.3.threshold)
       invisible(tbl.variants)
       })
 
@@ -187,16 +177,15 @@ setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
 #
 setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roi.string, motif.track, variants.track, candidate.tfs, tfMotifMappingName, shoulder=0){
+    function(obj, roi.string, motif.track, variants.source, candidate.tfs, tfMotifMappingName, shoulder=0){
 
        roi <- parseChromLocString(roi.string)
        gr.roi <- GRanges(as.data.frame(roi, stringsAsFactors=FALSE))  # used on each motifs table below
 
-       stopifnot(variants.track %in% c("eqtl.snps", "wgVariants"))
+       stopifnot(variants.source %in% c("eqtl.snps", "wgVariants"))
        stopifnot(tfMotifMappingName %in% c("MotifDb", "TFClass"))
        stopifnot(motif.track %in% c("DHS.motifs", "footprints", "enhancer.motifs", "allDNA.motifs"))
 
-       #browser()
        tbl.motifs <- switch(motif.track,
           "footprints" =
               {tbl.tmp <- obj@singleGeneData@tbl.fp;
@@ -242,9 +231,9 @@ setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
 
        #browser()
 
-       tbl.snps <- switch(variants.track,
+       tbl.snps <- switch(variants.source,
           "eqtl.snps" = {
-               tbl.tmp <- obj@singleGeneData@misc.data[["eqtl.snps"]][, c("chrom", "pos", "pos", "rsid", "score")];
+               tbl.tmp <- obj@singleGeneData@misc.data[["MAYO.eqtl.snps"]][, c("chrom", "pos", "pos", "rsid", "score")];
                colnames(tbl.tmp) <- c("chrom", "start", "end", "id", "snpScore")
                tbl.snps <- tbl.tmp
                },
@@ -256,17 +245,9 @@ setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
                #tbl.tmp <- tbl.tmp[, colnames.ordered]
                #tbl.snps <- tbl.tmp
                }
-           ) # switch on variants.track
+           ) # switch on variants.source
 
           # find all motifs which intersect with the roi
-
-       # browser()
-
-       #gr.roi <- GRanges(as.data.frame(roi, stringsAsFactors=FALSE))
-       #gr.motifs <- GRanges(tbl.motifs[, 1:3])
-       #tbl.ov <- as.data.frame(findOverlaps(gr.roi, gr.motifs, type="any"))
-       #colnames(tbl.ov) <- c("roi", "motif")
-       #tbl.motifs <- tbl.motifs[tbl.ov$motif,]
 
        gr.motifs.roi <- GRanges(tbl.motifs)
        gr.snps <- GRanges(seqnames=tbl.snps$chrom, IRanges(start=tbl.snps$start-shoulder, end=tbl.snps$end+shoulder))

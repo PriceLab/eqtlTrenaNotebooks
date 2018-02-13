@@ -17,7 +17,6 @@ runTests <- function()
    test_getRegulatoryModel()
    test_getFootprintsForRegion()
    test_getVariantsForRegion()
-   test_getWholeGenomeVariantsForRegion()
    test_getDHSForRegion()
    test_getEnhancersForRegion()
    test_findMotifsInRegion()
@@ -100,46 +99,45 @@ test_getVariantsForRegion <- function()
 {
     printf("--- test_getVariantsForRegion")
 
-    roi.string <- "chr5:88727837-88940643"
+   rsid.loc <- 88820502    # rs159950
+   shoulder <- 100
+   roi.small.shared <- list(chrom="chr5", start=rsid.loc-shoulder, end=rsid.loc+shoulder)
+   roi.string <- with(roi.small.shared, sprintf("%s:%d-%d", chrom, start, end))
 
-    tbl.snp <- getVariantsForRegion(sga, roi.string)  # no filtering on score (-log10(CER_P))
-    checkEquals(dim(tbl.snp), c(94, 18))
+   tbl.igap <- getVariantsForRegion(sga, "IGAP.snpChip", roi.string)   # 1 11
+   tbl.adni <- getVariantsForRegion(sga, "ADNI.WGS", roi.string)       # 3  5
+   tbl.eqtl <- getVariantsForRegion(sga, "MAYO.eqtl.snps", roi.string)  # 1 18
 
-       # use a strong filter
-    tbl.snp <- getVariantsForRegion(sga, roi.string, score.threshold=5)
-    checkEquals(dim(tbl.snp), c(12, 18))
-    checkTrue(all(-log10(tbl.snp$CER_P) >= 5))
+      #--------------------------------------------------------------------------------
+      # a much larger region, with source-specific filtering added.  igap first
+      #--------------------------------------------------------------------------------
 
-      # a region with no variants
-    tbl.snp <- getVariantsForRegion(sga, "chr5:88,883,347-88,884,158")
-    checkEquals(nrow(tbl.snp), 0)
+    roi.1Mb <- getGenomicBounds(MEF2C.data)
+    roi.string <- with(roi.1Mb, sprintf("%s:%d-%d", chrom, start, end))
+    tbl.igap <- getVariantsForRegion(sga, "IGAP.snpChip", roi.string, score.1.threshold=2.5)
+    checkEquals(dim(tbl.igap), c(25, 11))
 
-} # test_getVariantsForRegion
-#------------------------------------------------------------------------------------------------------------------------
-test_getWholeGenomeVariantsForRegion <- function()
-{
-    printf("--- test_getWholeGenomeVariantsForRegion")
+      #--------------------------------------------------------------------------------
+      # now adni: filter 1, filter 2, filter 1&2
+      #--------------------------------------------------------------------------------
 
-    roi.string <- "chr5:88727837-88940643"
+    tbl.adni.2 <- getVariantsForRegion(sga, "ADNI.WGS", roi.string, score.1.threshold=3)
+    checkEqualsNumeric(nrow(tbl.adni.2), 1000, tol=10)
 
-       # use strong filters
-    tbl.var <- getWholeGenomeVariantsForRegion(sga, roi.string, altToRefRatio=2.5, minAltCount=10)
-    checkEquals(dim(tbl.var), c(2, 5))
+    tbl.adni.3 <- getVariantsForRegion(sga, "ADNI.WGS", roi.string, score.2.threshold=30)  # AD samples, het or hom, >= this
+    checkEqualsNumeric(nrow(tbl.adni.3), 730, tol=10)
 
-       # use weaker filter
-    tbl.var <- getWholeGenomeVariantsForRegion(sga, roi.string, altToRefRatio=1.5, minAltCount=5)
-    checkEquals(dim(tbl.var), c(46, 5))
-    checkTrue(all(tbl.var$score >= 1.5))
+    tbl.adni.4 <- getVariantsForRegion(sga, "ADNI.WGS", roi.string, score.1.threshold=2, score.2.threshold=10)  # AD samples, het or hom, >= this
+    checkEqualsNumeric(nrow(tbl.adni.4), 13, tol=5)
 
-      # a region and scores with no variants
-    tbl.var <- getWholeGenomeVariantsForRegion(sga, "chr5:88,883,347-88,884,158", 2, 20)
-    checkEquals(nrow(tbl.var), 0)
+      #--------------------------------------------------------------------------------
+      # mayo eqtls
+      #--------------------------------------------------------------------------------
 
-      # test a region - "chr1:1-248,956,422" - the default when a trena jupyter notebook starts up -
-      # for which there is no data (in the case of mef2c)
-    tbl.var <- getWholeGenomeVariantsForRegion(sga, "chr1:1-248,956,422", 0, 1)
-    checkEquals(nrow(tbl.var), 0)
-
+    tbl.eqtl <- getVariantsForRegion(sga, "MAYO.eqtl.snps", roi.string, score.1.threshold=2)
+    checkTrue(nrow(tbl.eqtl) > 50)
+    checkTrue(nrow(tbl.eqtl) < 60)
+    checkTrue(all(-log10(tbl.eqtl$CER_P) >= 2))
 
 } # test_getVariantsForRegion
 #------------------------------------------------------------------------------------------------------------------------
@@ -204,7 +202,7 @@ test_findVariantsInModelForRegion <- function()
    tbl.1 <- findVariantsInModelForRegion(sga,
                                          roi.string,
                                          motif.track="footprints",
-                                         variants.track="eqtl.snps",
+                                         variants.source="eqtl.snps",
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="MotifDb",
                                          shoulder=0)
@@ -215,7 +213,7 @@ test_findVariantsInModelForRegion <- function()
    tbl.2 <- findVariantsInModelForRegion(sga,
                                          roi.string,
                                          motif.track="enhancer.motifs",
-                                         variants.track="wgVariants",
+                                         variants.source="wgVariants",
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="MotifDb",
                                          shoulder=0)
@@ -225,7 +223,7 @@ test_findVariantsInModelForRegion <- function()
    tbl.3 <- findVariantsInModelForRegion(sga,
                                          roi.string,
                                          motif.track="DHS.motifs",
-                                         variants.track="wgVariants",
+                                         variants.source="wgVariants",
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="MotifDb",
                                          shoulder=0)
@@ -235,7 +233,7 @@ test_findVariantsInModelForRegion <- function()
    tbl.4 <- findVariantsInModelForRegion(sga,
                                          roi.string,
                                          motif.track="DHS.motifs",
-                                         variants.track="eqtl.snps",
+                                         variants.source="eqtl.snps",
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="MotifDb",
                                          shoulder=0)
@@ -246,7 +244,7 @@ test_findVariantsInModelForRegion <- function()
    tbl.5 <- findVariantsInModelForRegion(sga,
                                          roi.string,
                                          motif.track="DHS.motifs",
-                                         variants.track="eqtl.snps",
+                                         variants.source="eqtl.snps",
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="TFClass",
                                          shoulder=0)
@@ -265,7 +263,7 @@ test_findVariantsInModelForRegion <- function()
    tbl.6 <- findVariantsInModelForRegion(sga,
                                          roi.string,
                                          motif.track="DHS.motifs",
-                                         variants.track="eqtl.snps",
+                                         variants.source="eqtl.snps",
                                          candidate.tfs=tfs.from.all.models,
                                          tfMotifMappingName="TFClass",
                                          shoulder=10)

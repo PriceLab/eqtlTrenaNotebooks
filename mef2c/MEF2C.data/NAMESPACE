@@ -10,7 +10,7 @@ exportMethods(
   getGenomicBounds,
   getExpressionMatrices,
   getFootprints,
-  getWholeGenomeVariants
+  getModels
   )
 
 

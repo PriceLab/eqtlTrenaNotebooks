@@ -1,5 +1,6 @@
 library(MEF2C.data)
 library(RUnit)
+library(GenomicRanges)
 #----------------------------------------------------------------------------------------------------
 printf <- function(...) print(noquote(sprintf(...)))
 #----------------------------------------------------------------------------------------------------
@@ -14,7 +15,7 @@ runTests <- function()
    test_getExpressionMatrices()
    test_getFootprints()
    test_getModels()
-   test_getWholeGenomeVariants()
+   test_getVariants()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -82,5 +83,67 @@ test_getWholeGenomeVariants <- function()
 
 } # test_getWholeGenomeVariants
 #----------------------------------------------------------------------------------------------------
+# we currently have three kinds of variants
+test_getVariants <- function()
+{
+   printf("--- test_getVariants")
+
+      # first the IGAP snpChip variants
+   roi <- getGenomicBounds(mef2c)
+   tbl.igap <- getVariants(mef2c, "IGAP.snpChip", roi, score.1.threshold=2.5)
+   checkEquals(dim(tbl.igap), c(25, 11))
+
+      # now the ADNI whole genome sequencing results
+   tbl.adni <- getVariants(mef2c, "ADNI.WGS", roi)
+   checkTrue(nrow(tbl.adni) > 5000)
+
+   tbl.adni.2 <- getVariants(mef2c, "ADNI.WGS", roi, score.1.threshold=3)
+   checkEqualsNumeric(nrow(tbl.adni.2), 1000, tol=10)
+
+   tbl.adni.3 <- getVariants(mef2c, "ADNI.WGS", roi, score.2.threshold=30)  # AD samples, het or hom, >= this
+   checkEqualsNumeric(nrow(tbl.adni.3), 730, tol=10)
+
+   tbl.adni.4 <- getVariants(mef2c, "ADNI.WGS", roi, score.1.threshold=2, score.2.threshold=10)  # AD samples, het or hom, >= this
+   checkEqualsNumeric(nrow(tbl.adni.4), 13, tol=5)
+
+      # MAYO.eqtl.snps
+   tbl.eqtl <- getVariants(mef2c, "MAYO.eqtl.snps", roi, score.1.threshold=2)
+   checkTrue(nrow(tbl.eqtl) > 50)
+   checkTrue(nrow(tbl.eqtl) < 60)
+   checkTrue(all(-log10(tbl.eqtl$CER_P) >= 2))
+
+      #--------------------------------------------------------------------------------
+      # find a small region mentioned in all three sources
+      #--------------------------------------------------------------------------------
+
+   roi <- getGenomicBounds(mef2c)
+   tbl.igap <- getVariants(mef2c, "IGAP.snpChip", roi)
+   tbl.adni <- getVariants(mef2c, "ADNI.WGS", roi)
+   tbl.eqtl <- getVariants(mef2c, "MAYO.eqtl.snps", roi)
+   gr.igap <- GRanges(tbl.igap)
+   gr.adni <- GRanges(tbl.adni)
+   tbl.eqtlFixed <- tbl.eqtl[, c("chrom", "pos", "pos")]
+   colnames(tbl.eqtlFixed) <- c("chrom", "start", "end")
+   gr.eqtl <- GRanges(tbl.eqtlFixed)
+
+   tbl.ov <- as.data.frame(findOverlaps(gr.igap, gr.adni))
+   colnames(tbl.ov) <- c("igap", "adni")
+
+   tbl.ov2 <- as.data.frame(findOverlaps(gr.igap, gr.eqtl))
+   colnames(tbl.ov2) <- c("igap", "eqtl")
+
+   rsid.loc <- 88820502    # rs159950
+   shoulder <- 100
+   roi.small.shared <- list(chrom="chr5", start=rsid.loc-shoulder, end=rsid.loc+shoulder)
+   tbl.igap <- getVariants(mef2c, "IGAP.snpChip",   roi.small.shared)   # 1 11
+   tbl.adni <- getVariants(mef2c, "ADNI.WGS",       roi.small.shared)   # 3  5
+   tbl.eqtl <- getVariants(mef2c, "MAYO.eqtl.snps", roi.small.shared)   # 1 18
+
+   checkEquals(nrow(tbl.igap), 1)
+   checkEquals(nrow(tbl.adni), 3)
+   checkEquals(nrow(tbl.eqtl), 1)
+
+} # test_getVariants
+#------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

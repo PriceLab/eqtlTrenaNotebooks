@@ -8,8 +8,9 @@ setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) st
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
-setGeneric('getWholeGenomeVariants', signature='obj', function(obj, roi, altToRefRatio, minAltCount)
-              standardGeneric ('getWholeGenomeVariants'))
+#setGeneric('getVariants', signature='obj', function(obj, source.name, roi, score.1.threshold=NA_real_,
+#                                                    score.2.threshold=NA_real_, score.3.threshold=NA_real_)
+#                   standardGeneric ('getVariants'))
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
@@ -73,7 +74,7 @@ MEF2C.data = function()
        #--------------------------------------------------------------------------------
 
    load(system.file(package="MEF2C.data", "extdata", "tbl.snp.hg38.score-ref-alt.RData"))
-   misc.data[["eqtl.snps"]] <- tbl.snp
+   misc.data[["MAYO.eqtl.snps"]] <- tbl.snp
 
        #--------------------------------------------------------------------------------
        # dhs regions, then their motifs, from UCSC-hosted wgEncodeRegDnaseClustered
@@ -83,6 +84,12 @@ MEF2C.data = function()
    misc.data[["tbl.dhs"]] <- tbl.dhs
    load(system.file(package="MEF2C.data", "extdata", "tbl.dhsMotifs.RData"))
    misc.data[["tbl.dhsMotifs"]] <- tbl.dhsMotifs
+
+       #--------------------------------------------------------------------------------
+       # load igap variants (228 in this region)
+       #--------------------------------------------------------------------------------
+   load(system.file(package="MEF2C.data", "extdata", "tbl.igapVariants.mef2c.RData"))
+   misc.data[["IGAP.snpChip"]] <- tbl.igapVariants.mef2c
 
        #--------------------------------------------------------------------------------
        # load all precalculated trena models
@@ -154,24 +161,55 @@ setMethod('getFootprints', 'MEF2C.data',
       }) # getFootprints
 
 #----------------------------------------------------------------------------------------------------
-setMethod('getWholeGenomeVariants', 'MEF2C.data',
+setMethod('getVariants', 'MEF2C.data',
 
-    function(obj, roi, altToRefRatio, minAltCount){
-      tbl.pos <- obj@misc.data[["wgVariants"]]
-      tbl.roi <- subset(tbl.pos, chrom==roi$chrom & start >= roi$start & end <= roi$end)
-      if(nrow(tbl.roi) == 0)
-         return(data.frame())
+    function(obj, source.name, roi, score.1.threshold=NA_real_,
+                  score.2.threshold=NA_real_, score.3.threshold=NA_real_){
 
-      tbl.out <- subset(tbl.roi, any.altAD > (altToRefRatio * any.altCTL) & any.altAD > minAltCount)
+      stopifnot(source.name %in% c("ADNI.WGS", "IGAP.snpChip", "MAYO.eqtl.snps"))
 
-      if(nrow(tbl.out) == 0)
-         return(data.frame())
-      tbl.out$name <- with(tbl.out, sprintf("%d.%s.%s.%d.%d.%d.%d",
-                           start, het.altAD, het.altCTL, hom.altAD, hom.altCTL, any.altAD, any.altCTL))
-      tbl.out$score <- with(tbl.out, any.altAD/any.altCTL)
-      tbl.out <- tbl.out[, c("chrom", "start", "end", "name", "score")]
+      if(source.name == "ADNI.WGS"){
+         tbl.pos <- obj@misc.data[["wgVariants"]]
+         tbl.out <- subset(tbl.pos, chrom==roi$chrom & start >= roi$start & end <= roi$end)
+         if(nrow(tbl.out) == 0)
+            return(data.frame())
+         if(!is.na(score.1.threshold)){
+            altToRefRatio <- score.1.threshold
+            tbl.out <- subset(tbl.out, any.altAD > (altToRefRatio * any.altCTL))
+            if(nrow(tbl.out) == 0)
+               return(data.frame())
+            } # AD/CTL > score.1.threshold
+         if(!is.na(score.2.threshold)){
+            altAnyCountMinimum <- score.2.threshold
+            tbl.out <- subset(tbl.out, any.altAD > altAnyCountMinimum)
+            if(nrow(tbl.out) == 0)
+               return(data.frame())
+            } # AD/CTL
+
+         tbl.out$name <- with(tbl.out, sprintf("%d.%s.%s.%d.%d.%d.%d",
+                              start, het.altAD, het.altCTL, hom.altAD, hom.altCTL, any.altAD, any.altCTL))
+         tbl.out$score <- with(tbl.out, any.altAD/any.altCTL)
+
+         tbl.out <- tbl.out[, c("chrom", "start", "end", "name", "score")]
+         } # adni.wgs
+      else if(source.name == "IGAP.snpChip"){
+         tbl.var <- obj@misc.data[["IGAP.snpChip"]]
+         tbl.out <- subset(tbl.var, chrom==roi$chrom & start >= roi$start & end <= roi$end)
+         if(nrow(tbl.out) == 0)
+            return(data.frame())
+         if(!is.na(score.1.threshold)){
+            minusLog10.pval <- score.1.threshold
+            tbl.out <- subset(tbl.out, -log10(pval) >= minusLog10.pval)
+            } # threshold supplied
+         } # igap.snpchip
+      else if(source.name == "MAYO.eqtl.snps"){
+         tbl.eqtl <- obj@misc.data$MAYO.eqtl.snps
+         tbl.out <- subset(tbl.eqtl, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
+         if(!is.na(score.1.threshold))
+            tbl.out <- subset(tbl.out, -log10(CER_P) >= score.1.threshold)
+         } # MAYO.eqtl.snps
       tbl.out
-      }) # getWholeGenomeVariants
+      }) # getVariants
 
 #----------------------------------------------------------------------------------------------------
 
