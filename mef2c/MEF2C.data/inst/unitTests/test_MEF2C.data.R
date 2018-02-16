@@ -154,7 +154,7 @@ test_getMotifs <- function()
    checkTrue(ncol(tbl.motifs) > 10)
    checkEquals(colnames(tbl.motifs)[1:5], c("chrom", "start", "end", "name", "score"))
 
-} # test_intersection
+} # test_getMotifs
 #----------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

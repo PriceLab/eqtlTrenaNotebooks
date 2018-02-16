@@ -73,6 +73,7 @@ class Trena:
     def getVariants(self, variantSource, score_1_threshold=None, score_2_threshold=None, display=False, color="red", trackHeight=50):
         payload = {"roi": self.getGenomicRegion(),
                    'source.name': variantSource,
+                   'tracking.name': variantSource,
                    'score.1.threshold': score_1_threshold,
                    'score.2.threshold': score_2_threshold,
                    'score.3.threshold': None}
@@ -84,13 +85,30 @@ class Trena:
         tbl = self.dataFrameFrom3partList(tblAsList)
         tbl.key = payload["key"]
         if(display):
-           self.tv.addBedTrackFromDataFrame(tbl, variantSource, "SQUISHED", color, trackHeight)
+           self.tv.addBedTrackFromDataFrame(tbl, variantSource, "EXPANDED", color, trackHeight)
         return(tbl)
 
-    def intersectTracks(self, trackName_1, trackName_2, display=False, color="red", trackHeight=50):
+    def getMotifs(self, motifSource, score_threshold=None, display=False, color="red", trackHeight=50):
+        payload = {"roi": self.getGenomicRegion(),
+                   'source.name': motifSource,
+                   'tracking.name': motifSource,
+                   'score.threshold': score_threshold}
+        msg = {'cmd': 'getMotifs', 'status': 'request', 'callback': '', 'payload': payload}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        payload = response["payload"]
+        tblAsList = payload["tbl"]
+        tbl = self.dataFrameFrom3partList(tblAsList)
+        tbl.key = payload["key"]
+        if(display):
+           self.tv.addBedTrackFromDataFrame(tbl.ix[:,0:5], motifSource, "SQUISHED", color, trackHeight)
+        return(tbl)
+
+    def intersectTracks(self, trackName_1, trackName_2, shoulder=0, display=False, color="red", trackHeight=50):
         payload = {"roi": self.getGenomicRegion(),
                    'trackName_1': trackName_1,
-                   'trackName_2': trackName_2)
+                   'trackName_2': trackName_2,
+                   'shoulder': shoulder}
         msg = {'cmd': 'intersectTracks', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
@@ -170,7 +188,7 @@ class Trena:
         payload = response["payload"]
         return(self.dataFrameFrom3partList(payload))
 
-    def getFootprintsInRegion(self, display):
+    def getFootprintsInRegion(self, display=False):
         payload = {"roi": self.getGenomicRegion()}
         msg = {'cmd': 'getFootprintsInRegion', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
@@ -181,6 +199,7 @@ class Trena:
         regTbl = self.dataFrameFrom3partList(tblAsList)
         regTbl.key = payload["key"]
         if(display):
+           self.removeTracks("footprints")
            self.tv.addBedTrackFromDataFrame(regTbl, "footprints", "SQUISHED", "blue")
         return(regTbl)
 
@@ -219,7 +238,7 @@ class Trena:
     def getMotifsInRegion(self, motif, matchScore, display, color="blue"):
         payload = {"roi": self.getGenomicRegion(),
                    "motifs": motif,
-                   "matchScore": matchScore}
+                   "": matchScore}
         msg = {'cmd': 'getMotifsInRegion', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
         response = json.loads(self.trenaServer.recv_string())
@@ -271,7 +290,7 @@ class Trena:
     def displayGraphFromFile(self, filename, modelNames):
         self.tv.displayGraphFromFile(filename, modelNames)
 
-    def removeTrack(self, trackNames):
+    def removeTracks(self, trackNames):
         self.tv.removeTracksByName(trackNames)
 
     def makeMark(self, chrom, start, end, trackName, color):

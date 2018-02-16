@@ -63,6 +63,7 @@ handleMessage <- function(msg)
    else if(msg$cmd == "getVariants"){
       roi.string <- msg$payload$roi
       source.name <- msg$payload$source.name
+      tracking.name <- msg$payload$tracking.name
       supported.source.names <- c("IGAP.snpChip", "ADNI.WGS", "MAYO.eqtl.snps")
       if(!source.name %in% c(supported.source.names)){
          error.msg <- sprintf("source.name '%s' for variants unrecognized, should be one of %s",
@@ -74,14 +75,13 @@ handleMessage <- function(msg)
          score.1.threshold <- msg$payload$score.1.threshold
          score.2.threshold <- msg$payload$score.2.threshold
          score.3.threshold <- msg$payload$score.3.threshold
-         tbl.var <- getVariantsForRegion(sga, source.name, roi.string, score.1.threshold, score.2.threshold, score.3.threshold)
+         tbl.var <- getVariantsForRegion(sga, source.name, tracking.name, roi.string,
+                                         score.1.threshold, score.2.threshold, score.3.threshold)
          if(nrow(tbl.var) == 0){
             response <- list(cmd=msg$callback, status="failure", callback="", payload="no variants in region");
             }
          else{
            printf("--- colnames of tbl.var: %s", paste(colnames(tbl.var), collapse=","))
-           #tbl.var <- tbl.snp[, c("chrom", "pos", "pos", "rsid", "filteringScore")]
-           #colnames(tbl.var) <- c("chrom", "start", "end", "id", "score")
            rownames(tbl.var) <- NULL
            key <- as.character(as.numeric(Sys.time()) * 100000)
            tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.var)
@@ -91,11 +91,40 @@ handleMessage <- function(msg)
          } # else: good source.name provided
       } # getVariants
 
+   else if(msg$cmd == "getMotifs"){
+      roi.string <- msg$payload$roi
+      source.name <- msg$payload$source.name
+      tracking.name <- msg$payload$tracking.name
+      score.threshold <- msg$payload$score.threshold
+      supported.source.names <- c("allDNA-jaspar2018-human-mouse-motifs")
+      if(!source.name %in% c(supported.source.names)){
+         error.msg <- sprintf("source.name '%s' for motifs unrecognized, should be one of %s",
+                              paste(supported.source.names, collapse=", "))
+         print(error.msg)
+         response <- list(cmd=msg$callback, status="failure", callback="", payload=error.msg)
+         }
+      else{
+         tbl.motifs <- getMotifsForRegion(sga, source.name, tracking.name, roi.string, score.threshold)
+         if(nrow(tbl.motifs) == 0){
+            response <- list(cmd=msg$callback, status="failure", callback="", payload="no motifs in region");
+            }
+         else{
+           printf("--- colnames of tbl.motifs: %s", paste(colnames(tbl.motifs), collapse=","))
+           rownames(tbl.motifs) <- NULL
+           key <- as.character(as.numeric(Sys.time()) * 100000)
+           tbl.fp.as.list <- dataFrameToPandasFriendlyList(tbl.motifs)
+           payload <- list(tbl=tbl.fp.as.list, key=key)
+           response <- list(cmd=msg$callback, status="success", callback="", payload=payload);
+            } # nrow(tbl.snp) > 0
+         } # else: good source.name provided
+      } # getMotifs
+
    else if(msg$cmd == "intersectTracks"){
-      roiString <- msg$payload$roi
+      roiString   <- msg$payload$roi
       trackName.1 <- msg$payload$trackName_1
       trackName.2 <- msg$payload$trackName_2
-      tbl.intersect <- intersectTracks(sga, roiString, trackName.1, trackName.2)
+      shoulder    <- msg$payload$shoulder
+      tbl.intersect <- intersectTracks(sga, roiString, trackName.1, trackName.2, shoulder)
       if(nrow(tbl.intersect) == 0){
          errorMessage <- sprintf("no intersection of %s and %s in region %s", trackName.1, trackName.2, roiString);
          response <- list(cmd=msg$callback, status="failure", callback="", payload=errorMessage)
