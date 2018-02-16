@@ -8,15 +8,20 @@ export(
    )
 
 exportMethods(
+   getFromCache,
+   getCacheItemNames,
+   clearCache,
    summarizeExpressionMatrices,
    getRegulatoryModelNames,
    getRegulatoryModel,
    getFootprintsForRegion,
    getVariantsForRegion,
+   getMotifsForRegion,
    getDHSForRegion,
    getEnhancersForRegion,
    findVariantsInModelForRegion,
-   findMotifsInRegion
+   findMotifsInRegion,
+   intersectTracks
    )
 
 import(trena)

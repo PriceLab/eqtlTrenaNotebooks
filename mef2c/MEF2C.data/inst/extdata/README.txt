@@ -29,6 +29,8 @@
 
    ---> get variants from the vcf file
 
+     ~/github/eqtlTrenaNotebooks/mef2c/MEF2C.data/inst/dataPrep/getAllVariants.R
+
 --- enhancer motifs: mapped to TFs both with MotifDb and TFClass
    print(load("~/github/eqtlTrenaNotebooks/mef2c/trena/data/tbl.eMotifs.RData"))  # [1] "tbl.eMotifs.mdb" "tbl.eMotifs.tfc"
    max(tbl.eMotifs.mdb$motifEnd) - min(tbl.eMotifs.mdb$motifStart)  # [1] 919689

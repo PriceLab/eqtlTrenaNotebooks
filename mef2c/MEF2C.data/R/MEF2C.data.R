@@ -8,9 +8,6 @@ setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) st
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
-#setGeneric('getVariants', signature='obj', function(obj, source.name, roi, score.1.threshold=NA_real_,
-#                                                    score.2.threshold=NA_real_, score.3.threshold=NA_real_)
-#                   standardGeneric ('getVariants'))
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
@@ -73,7 +70,7 @@ MEF2C.data = function()
        # dim(tbl.snps) 155 18
        #--------------------------------------------------------------------------------
 
-   load(system.file(package="MEF2C.data", "extdata", "tbl.snp.hg38.score-ref-alt.RData"))
+   load(system.file(package="MEF2C.data", "extdata", "tbl.snp.hg38.score-ref-alt.bedFormat.RData"))
    misc.data[["MAYO.eqtl.snps"]] <- tbl.snp
 
        #--------------------------------------------------------------------------------
@@ -90,6 +87,13 @@ MEF2C.data = function()
        #--------------------------------------------------------------------------------
    load(system.file(package="MEF2C.data", "extdata", "tbl.igapVariants.mef2c.RData"))
    misc.data[["IGAP.snpChip"]] <- tbl.igapVariants.mef2c
+
+       #--------------------------------------------------------------------------------
+       # load all-DNA motifs, jaspar2018 human + mouse
+       #--------------------------------------------------------------------------------
+   load(system.file(package="MEF2C.data", "extdata",
+                    "tbl.motifs.jaspar2018.human.mouse.chr5.88391000.89322000.RData"))
+   misc.data[["allDNA-jaspar2018-human-mouse-motifs"]] <- tbl.motifs
 
        #--------------------------------------------------------------------------------
        # load all precalculated trena models
@@ -204,7 +208,7 @@ setMethod('getVariants', 'MEF2C.data',
          } # igap.snpchip
       else if(source.name == "MAYO.eqtl.snps"){
          tbl.eqtl <- obj@misc.data$MAYO.eqtl.snps
-         tbl.out <- subset(tbl.eqtl, chrom==roi$chrom & pos >= roi$start & pos <= roi$end)
+         tbl.out <- subset(tbl.eqtl, chrom==roi$chrom & start >= roi$start & start <= roi$end)
          if(!is.na(score.1.threshold))
             tbl.out <- subset(tbl.out, -log10(CER_P) >= score.1.threshold)
          } # MAYO.eqtl.snps
@@ -212,4 +216,19 @@ setMethod('getVariants', 'MEF2C.data',
       }) # getVariants
 
 #----------------------------------------------------------------------------------------------------
+setMethod('getMotifs', 'MEF2C.data',
 
+    function(obj, source.name, roi, score.threshold=NA_real_){
+
+      stopifnot(source.name %in% c("allDNA-jaspar2018-human-mouse-motifs"))
+       if(source.name == "allDNA-jaspar2018-human-mouse-motifs"){
+          tbl.motifs <- obj@misc.data[["allDNA-jaspar2018-human-mouse-motifs"]]
+          tbl.out <- subset(tbl.motifs, chrom==roi$chrom & start >= roi$start & end < roi$end)
+          if(!is.na(score.threshold))
+             tbl.out <- subset(tbl.out, score >= score.threshold)
+          } # allDNA-jaspar2018-human-mouse-motifs
+
+       tbl.out
+       })
+
+#----------------------------------------------------------------------------------------------------

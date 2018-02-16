@@ -5,14 +5,15 @@ library(RUnit)
 printf <- function(...) print(noquote(sprintf(...)))
 #------------------------------------------------------------------------------------------------------------------------
 if(!exists("sga")){
-   MEF2C.data <- MEF2C.data()
-   sga <- SingleGeneAnalyzer(genomeName="hg38", targetGene="MEF2C", targetGene.TSS=88904257, MEF2C.data)
+   mef2c <- MEF2C.data()
+   sga <- SingleGeneAnalyzer(genomeName="hg38", targetGene="MEF2C", targetGene.TSS=88904257, mef2c)
    checkEquals(is(sga), "SingleGeneAnalyzer")
    }
 #------------------------------------------------------------------------------------------------------------------------
 runTests <- function()
 {
    test_dataFrameToPandasFriendlyList()
+   test_trackerCache()
    test_summarizeExpressionMatrices()
    test_getRegulatoryModel()
    test_getFootprintsForRegion()
@@ -20,6 +21,7 @@ runTests <- function()
    test_getDHSForRegion()
    test_getEnhancersForRegion()
    test_findMotifsInRegion()
+   test_intersectTracks()
    test_findVariantsInModelForRegion()
 
 } # runTests
@@ -46,6 +48,22 @@ test_dataFrameToPandasFriendlyList <- function()
    checkEquals(rownames(x$tbl), as.character(1:row.count))
 
 } # test_dataFrameToPandasFriendlyList
+#------------------------------------------------------------------------------------------------------------------------
+test_trackerCache <- function()
+{
+   printf("--- test_trackerCache")
+
+   clearCache(sga)
+   checkEquals(length(getCacheItemNames(sga)), 0)
+   sga@trackerCache[["foo"]] <- data.frame()
+
+   sga@trackerCache[["bar"]] <- LETTERS
+   checkEquals(sort(getCacheItemNames(sga)), c("bar", "foo"))
+
+   checkEquals(getFromCache(sga, "bar"), LETTERS)
+   checkEquals(nrow(getFromCache(sga, "foo")), 0)
+
+} # test_trackerCache
 #------------------------------------------------------------------------------------------------------------------------
 test_summarizeExpressionMatrices <- function()
 {
@@ -104,37 +122,42 @@ test_getVariantsForRegion <- function()
    roi.small.shared <- list(chrom="chr5", start=rsid.loc-shoulder, end=rsid.loc+shoulder)
    roi.string <- with(roi.small.shared, sprintf("%s:%d-%d", chrom, start, end))
 
-   tbl.igap <- getVariantsForRegion(sga, "IGAP.snpChip", roi.string)   # 1 11
-   tbl.adni <- getVariantsForRegion(sga, "ADNI.WGS", roi.string)       # 3  5
-   tbl.eqtl <- getVariantsForRegion(sga, "MAYO.eqtl.snps", roi.string)  # 1 18
+   tbl.igap <- getVariantsForRegion(sga, "IGAP.snpChip", "foo", roi.string)   # 1 11
+   tbl.adni <- getVariantsForRegion(sga, "ADNI.WGS", "bar", roi.string)       # 3  5
+   tbl.eqtl <- getVariantsForRegion(sga, "MAYO.eqtl.snps", tracking.name=NA, roi.string)  # 1 18
+
+   checkEquals(colnames(tbl.igap)[1:5], c("chrom", "start", "end", "id", "score"))
+   checkEquals(colnames(tbl.adni)[1:5], c("chrom", "start", "end", "name", "score"))
+   checkEquals(colnames(tbl.eqtl)[1:5], c("chrom", "start", "end", "name", "score"))
 
       #--------------------------------------------------------------------------------
       # a much larger region, with source-specific filtering added.  igap first
       #--------------------------------------------------------------------------------
 
-    roi.1Mb <- getGenomicBounds(MEF2C.data)
+    roi.1Mb <- getGenomicBounds(mef2c)
     roi.string <- with(roi.1Mb, sprintf("%s:%d-%d", chrom, start, end))
-    tbl.igap <- getVariantsForRegion(sga, "IGAP.snpChip", roi.string, score.1.threshold=2.5)
+    tbl.igap <- getVariantsForRegion(sga, "IGAP.snpChip", tracking.name="88",
+                                     roi.string, score.1.threshold=2.5)
     checkEquals(dim(tbl.igap), c(25, 11))
 
       #--------------------------------------------------------------------------------
       # now adni: filter 1, filter 2, filter 1&2
       #--------------------------------------------------------------------------------
 
-    tbl.adni.2 <- getVariantsForRegion(sga, "ADNI.WGS", roi.string, score.1.threshold=3)
+    tbl.adni.2 <- getVariantsForRegion(sga, "ADNI.WGS", tracking.name="99", roi.string, score.1.threshold=3)
     checkEqualsNumeric(nrow(tbl.adni.2), 1000, tol=10)
 
-    tbl.adni.3 <- getVariantsForRegion(sga, "ADNI.WGS", roi.string, score.2.threshold=30)  # AD samples, het or hom, >= this
+    tbl.adni.3 <- getVariantsForRegion(sga, "ADNI.WGS", tracking.name="asb", roi.string, score.2.threshold=30)  # AD samples, het or hom, >= this
     checkEqualsNumeric(nrow(tbl.adni.3), 730, tol=10)
 
-    tbl.adni.4 <- getVariantsForRegion(sga, "ADNI.WGS", roi.string, score.1.threshold=2, score.2.threshold=10)  # AD samples, het or hom, >= this
+    tbl.adni.4 <- getVariantsForRegion(sga, "ADNI.WGS", tracking.name="pdq", roi.string, score.1.threshold=2, score.2.threshold=10)  # AD samples, het or hom, >= this
     checkEqualsNumeric(nrow(tbl.adni.4), 13, tol=5)
 
       #--------------------------------------------------------------------------------
       # mayo eqtls
       #--------------------------------------------------------------------------------
 
-    tbl.eqtl <- getVariantsForRegion(sga, "MAYO.eqtl.snps", roi.string, score.1.threshold=2)
+    tbl.eqtl <- getVariantsForRegion(sga, "MAYO.eqtl.snps", tracking.name="asap", roi.string, score.1.threshold=2)
     checkTrue(nrow(tbl.eqtl) > 50)
     checkTrue(nrow(tbl.eqtl) < 60)
     checkTrue(all(-log10(tbl.eqtl$CER_P) >= 2))
@@ -190,6 +213,65 @@ test_findMotifsInRegion <- function()
    checkEquals(dim(tbl.tfClass), c(9, 13))
 
 } # test_findMotifsInRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_intersectTracks <- function()
+{
+   printf("--- test_intersectTracks")
+
+   #----------------------------------------------------------------------------------------------------
+   # first 100bp with one IGAP snp and 5 motifs, 2 of which overlap the nsp with no shoulder considered
+   #----------------------------------------------------------------------------------------------------
+
+   roi.100 <- list(chrom="chr5", start=88885250, end= 88885350)    # 100 base pairs a few kb upstream of tss
+   roi.string <- with(roi.100, sprintf("%s:%d-%d", chrom, start, end))
+
+   tbl.snps <- getVariantsForRegion(sga,
+                                    source.name="IGAP.snpChip",
+                                    tracking.name="IGAP.snpChip",
+                                    roi.string=roi.string,
+                                    score.1.threshold=2.5)
+   checkTrue(nrow(tbl.snps) > 0)
+   tbl.motifs <- getMotifsForRegion(sga,
+                                    source.name="allDNA-jaspar2018-human-mouse-motifs",
+                                    tracking.name="motifs",
+                                    roi.string=roi.string,
+                                    score.threshold=0.95)
+   checkTrue(nrow(tbl.motifs) >= 5)
+   tbl.intersected <- intersectTracks(sga, "IGAP.snpChip", "motifs", shoulder=0)
+   checkEquals(dim(tbl.intersected), c(2, 24))
+
+      #-------------------------------------------------------------------------------
+      # now 10kb, +/- 5kb from the apparent TSS
+      #-------------------------------------------------------------------------------
+
+   roi.string <- "chr5:88,878,464-88,888,464"
+   roi.string <- "chr5:88,861,979-88,901,982"
+   tbl.snps <- getVariantsForRegion(sga,
+                                    source.name="IGAP.snpChip",
+                                    tracking.name="IGAP.snpChip",
+                                    roi.string=roi.string,
+                                    score.1.threshold=2.5)
+   checkTrue(nrow(tbl.snps) >= 5)
+   tbl.motifs <- getMotifsForRegion(sga,
+                                    source.name="allDNA-jaspar2018-human-mouse-motifs",
+                                    tracking.name="motifs",
+                                    roi.string=roi.string,
+                                    score.threshold=0.95)
+   checkTrue(nrow(tbl.motifs) >= 4000)
+   tbl.intersected <- intersectTracks(sga, "IGAP.snpChip", "motifs", shoulder=0)
+   checkEquals(dim(tbl.intersected), c(5, 24))
+   checkEquals(tbl.intersected$id, c("rs10064180", "rs10064180", "rs10061297", "rs3850651", "rs3850651"))
+   checkEquals(tbl.intersected$name.B, c("MA0625.1", "MA0032.1", "MA0876.1", "MA0100.3", "MA0100.1"))
+
+   tbl.intersected <- intersectTracks(sga, "IGAP.snpChip", "motifs", shoulder=10)
+
+   checkEquals(dim(tbl.intersected), c(8, 24))   # the extra shoulder picks up a few more motifs
+   checkEquals(tbl.intersected$id, c("rs79820174", "rs10064180", "rs10064180", "rs10064180",
+                                     "rs10061297", "rs10061297", "rs3850651", "rs3850651"))
+   checkEquals(tbl.intersected$name.B, c("MA0498.2", "MA0625.1", "MA0151.1", "MA0032.1", "MA0876.1",
+                                         "MA0151.1", "MA0100.3", "MA0100.1"))
+
+} # test_intersectTracks
 #------------------------------------------------------------------------------------------------------------------------
 test_findVariantsInModelForRegion <- function()
 {

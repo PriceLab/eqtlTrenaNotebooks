@@ -70,7 +70,41 @@ class Trena:
         tbl = self.dataFrameFrom3partList(tblAsList)
         return(tbl)
 
-    def getVariants(self, minScore, display, color, trackHeight=50):
+    def getVariants(self, variantSource, score_1_threshold=None, score_2_threshold=None, display=False, color="red", trackHeight=50):
+        payload = {"roi": self.getGenomicRegion(),
+                   'source.name': variantSource,
+                   'score.1.threshold': score_1_threshold,
+                   'score.2.threshold': score_2_threshold,
+                   'score.3.threshold': None}
+        msg = {'cmd': 'getVariants', 'status': 'request', 'callback': '', 'payload': payload}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        payload = response["payload"]
+        tblAsList = payload["tbl"]
+        tbl = self.dataFrameFrom3partList(tblAsList)
+        tbl.key = payload["key"]
+        if(display):
+           self.tv.addBedTrackFromDataFrame(tbl, variantSource, "SQUISHED", color, trackHeight)
+        return(tbl)
+
+    def intersectTracks(self, trackName_1, trackName_2, display=False, color="red", trackHeight=50):
+        payload = {"roi": self.getGenomicRegion(),
+                   'trackName_1': trackName_1,
+                   'trackName_2': trackName_2)
+        msg = {'cmd': 'intersectTracks', 'status': 'request', 'callback': '', 'payload': payload}
+        self.trenaServer.send_string(json.dumps(msg))
+        response = json.loads(self.trenaServer.recv_string())
+        payload = response["payload"]
+        tblAsList = payload["tbl"]
+        tbl = self.dataFrameFrom3partList(tblAsList)
+        tbl.key = payload["key"]
+        if(display):
+           trackName = "%s x %s" % (trackName_1, trackName_2)
+           self.tv.addBedTrackFromDataFrame(tbl, trackName, "SQUISHED", color, trackHeight)
+        return(tbl)
+
+
+    def oldGetVariants(self, minScore, display, color, trackHeight=50):
         payload = {"roi": self.getGenomicRegion(), 'minScore': minScore}
         msg = {'cmd': 'getVariants', 'status': 'request', 'callback': '', 'payload': payload}
         self.trenaServer.send_string(json.dumps(msg))
@@ -236,6 +270,13 @@ class Trena:
 
     def displayGraphFromFile(self, filename, modelNames):
         self.tv.displayGraphFromFile(filename, modelNames)
+
+    def removeTrack(self, trackNames):
+        self.tv.removeTracksByName(trackNames)
+
+    def makeMark(self, chrom, start, end, trackName, color):
+        self.tv.makeMark(chrom, start, end, trackName, color)
+
 
     def setStyle(self, filename):
         self.tv.setStyle(filename)

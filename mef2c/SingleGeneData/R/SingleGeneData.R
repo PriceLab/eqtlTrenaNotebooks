@@ -22,6 +22,8 @@ setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric('
 setGeneric('getModels', signature='obj', function(obj) standardGeneric('getModels'))
 setGeneric('getVariants', signature='obj', function(obj, source.name, roi, score.1.threshold=NA_real_,
                                     score.2.threshold=NA_real, score.3.threshold=NA_real_) standardGeneric ('getVariants'))
+setGeneric('getMotifs', signature='obj', function(obj, source.name, roi, score.threshold=NA_real_)
+                                    standardGeneric ('getMotifs'))
 
 
 #------------------------------------------------------------------------------------------------------------------------

@@ -5,7 +5,8 @@
                                targetGene.TSS="numeric",
                                singleGeneData="SingleGeneData",
                                trena="Trena",
-                               quiet="logical"
+                               quiet="logical",
+                               trackerCache="environment"
                                )
                             )
 
@@ -17,9 +18,14 @@ setGeneric('getRegulatoryModel', signature='obj', function(obj, modelName) stand
 
 setGeneric('getFootprintsForRegion', signature='obj', function(obj, roi.string, score.threshold=NA)
               standardGeneric ('getFootprintsForRegion'))
-setGeneric('getVariantsForRegion', signature='obj', function(obj, source.name, roi.string,
+
+setGeneric('getVariantsForRegion', signature='obj', function(obj, source.name, tracking.name, roi.string,
                   score.1.threshold=NA_real_, score.2.threshold=NA_real, score.3.threshold=NA_real_)
               standardGeneric ('getVariantsForRegion'))
+
+setGeneric('getMotifsForRegion', signature='obj', function(obj, source.name, tracking.name, roi.string, score.threshold=NA_real_)
+              standardGeneric('getMotifsForRegion'))
+
 setGeneric('getDHSForRegion', signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
            signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
@@ -32,6 +38,11 @@ setGeneric('findMotifsInRegion', signature='obj',
            function(obj, roi.string, motifs, pwmMatchPercentage, variants=NA_character)
               standardGeneric ('findMotifsInRegion'))
 
+setGeneric('getCacheItemNames', signature='obj', function(obj) standardGeneric('getCacheItemNames'))
+setGeneric('getFromCache', signature='obj', function(obj, tracker.name) standardGeneric('getFromCache'))
+setGeneric('clearCache', signature='obj', function(obj) standardGeneric('clearCache'))
+setGeneric('intersectTracks', signature='obj', function(obj, trackName.1, trackName.2, shoulder) standardGeneric('intersectTracks'))
+
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -42,7 +53,8 @@ SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGene
                               targetGene.TSS=targetGene.TSS,
                               singleGeneData=singleGeneData,
                               trena=trena,
-                              quiet=quiet)
+                              quiet=quiet,
+                              trackerCache=new.env(parent=emptyenv()))
    obj
 
 } # constructor
@@ -78,6 +90,31 @@ setMethod('summarizeExpressionMatrices', 'SingleGeneAnalyzer',
        })
 
 #----------------------------------------------------------------------------------------------------
+setMethod('getCacheItemNames', signature='SingleGeneAnalyzer',
+
+       function(obj) {
+          return(ls(obj@trackerCache))
+          })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getFromCache', signature='SingleGeneAnalyzer',
+
+       function(obj, tracker.name){
+          if(!tracker.name %in% ls(obj@trackerCache)){
+             printf("nothing named '%s' in cache")
+             return(NA)
+             }
+          obj@trackerCache[[tracker.name]]
+          })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('clearCache', signature='SingleGeneAnalyzer',
+
+       function(obj){
+          rm(list=ls(obj@trackerCache), envir=obj@trackerCache)
+          })
+
+#----------------------------------------------------------------------------------------------------
 setMethod('getRegulatoryModelNames', 'SingleGeneAnalyzer',
        function(obj){
           return(names(getModels(obj@singleGeneData)))
@@ -108,7 +145,7 @@ setMethod('getFootprintsForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
 
-   function(obj, source.name, roi.string, score.1.threshold=NA_real_,
+   function(obj, source.name, tracking.name, roi.string, score.1.threshold=NA_real_,
             score.2.threshold=NA_real_, score.3.threshold=NA_real_){
 
       roi <- trena::parseChromLocString(roi.string)
@@ -116,7 +153,24 @@ setMethod('getVariantsForRegion', 'SingleGeneAnalyzer',
                                   score.1.threshold=score.1.threshold,
                                   score.2.threshold=score.2.threshold,
                                   score.3.threshold=score.3.threshold)
+      if(!is.na(tracking.name))
+         obj@trackerCache[[tracking.name]] <- tbl.variants
+
       invisible(tbl.variants)
+      })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('getMotifsForRegion', 'SingleGeneAnalyzer',
+
+   function(obj, source.name, tracking.name, roi.string, score.threshold=NA_real_){
+
+      roi <- trena::parseChromLocString(roi.string)
+      tbl.motifs <- getMotifs(obj@singleGeneData, source.name, roi,
+                                  score.threshold=score.threshold)
+      if(!is.na(tracking.name))
+         obj@trackerCache[[tracking.name]] <- tbl.motifs
+
+      invisible(tbl.motifs)
       })
 
 #----------------------------------------------------------------------------------------------------
@@ -169,6 +223,41 @@ setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
           colnames(tbl.all)[2:3] <- c("start", "end")
           tbl.all
           }) # findMotifsInR
+
+#----------------------------------------------------------------------------------------------------
+setMethod('intersectTracks', signature='SingleGeneAnalyzer',
+
+    function(obj, trackName.1, trackName.2, shoulder=0){
+        printf("sga::intersectTracks, %s in %s with shoulder: %d",  trackName.1, trackName.2, shoulder)
+
+        if(!trackName.1 %in% ls(obj@trackerCache)){
+           printf("'%s% named variable not in SingleGeneAnalyzer cacher", trackName.1)
+           return(data.frame())
+           }
+        if(!trackName.2 %in% ls(obj@trackerCache)){
+           printf("'%s% named variable not in SingleGeneAnalyzer cacher", trackName.2)
+           return(data.frame())
+           }
+        tbl.1 <- obj@trackerCache[[trackName.1]]
+        tbl.2 <- obj@trackerCache[[trackName.2]]
+
+        stopifnot(all(c("chrom", "start", "end") %in% colnames(tbl.1)))
+        stopifnot(all(c("chrom", "start", "end") %in% colnames(tbl.2)))
+
+        tbl.1$start <- tbl.1$start - shoulder
+        tbl.1$end   <- tbl.1$end + shoulder
+
+        tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.1), GRanges(tbl.2)))
+        tbl.out <- data.frame()
+        if(nrow(tbl.ov) > 0){
+           colnames(tbl.ov) <- c("one", "two")
+           tbl.1 <- tbl.1[tbl.ov$one,]
+           tbl.2 <- tbl.2[tbl.ov$two,]
+           colnames(tbl.2) <- sprintf("%s.B", colnames(tbl.2))
+           tbl.out <- cbind(tbl.1, tbl.2)
+           }
+        return(tbl.out)
+        }) # intersectTracks
 
 #----------------------------------------------------------------------------------------------------
 # strategy:
@@ -233,9 +322,7 @@ setMethod('findVariantsInModelForRegion', 'SingleGeneAnalyzer',
 
        tbl.snps <- switch(variants.source,
           "eqtl.snps" = {
-               tbl.tmp <- obj@singleGeneData@misc.data[["MAYO.eqtl.snps"]][, c("chrom", "pos", "pos", "rsid", "score")];
-               colnames(tbl.tmp) <- c("chrom", "start", "end", "id", "snpScore")
-               tbl.snps <- tbl.tmp
+               obj@singleGeneData@misc.data[["MAYO.eqtl.snps"]]
                },
           "wgVariants" = {
                obj@singleGeneData@misc.data[["wgVariants"]]

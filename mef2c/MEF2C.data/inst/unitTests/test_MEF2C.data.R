@@ -16,6 +16,7 @@ runTests <- function()
    test_getFootprints()
    test_getModels()
    test_getVariants()
+   test_getMotifs()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -122,9 +123,7 @@ test_getVariants <- function()
    tbl.eqtl <- getVariants(mef2c, "MAYO.eqtl.snps", roi)
    gr.igap <- GRanges(tbl.igap)
    gr.adni <- GRanges(tbl.adni)
-   tbl.eqtlFixed <- tbl.eqtl[, c("chrom", "pos", "pos")]
-   colnames(tbl.eqtlFixed) <- c("chrom", "start", "end")
-   gr.eqtl <- GRanges(tbl.eqtlFixed)
+   gr.eqtl <- GRanges(tbl.eqtl)
 
    tbl.ov <- as.data.frame(findOverlaps(gr.igap, gr.adni))
    colnames(tbl.ov) <- c("igap", "adni")
@@ -145,5 +144,17 @@ test_getVariants <- function()
 
 } # test_getVariants
 #------------------------------------------------------------------------------------------------------------------------
+test_getMotifs <- function()
+{
+   printf("--- test_getMotifs")
+   roi <- list(chrom="chr5", start=88881285, end=88885739)
+
+   tbl.motifs <- getMotifs(mef2c, source.name="allDNA-jaspar2018-human-mouse-motifs", roi, 0.95)
+   checkTrue(nrow(tbl.motifs) > 300)
+   checkTrue(ncol(tbl.motifs) > 10)
+   checkEquals(colnames(tbl.motifs)[1:5], c("chrom", "start", "end", "name", "score"))
+
+} # test_intersection
+#----------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()
