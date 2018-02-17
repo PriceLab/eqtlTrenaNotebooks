@@ -256,6 +256,7 @@ setMethod('intersectTracks', signature='SingleGeneAnalyzer',
            colnames(tbl.2) <- sprintf("%s.B", colnames(tbl.2))
            tbl.out <- cbind(tbl.1, tbl.2)
            }
+        printf("sga::intersectTracks found %d hits", nrow(tbl.out))
         return(tbl.out)
         }) # intersectTracks
 
