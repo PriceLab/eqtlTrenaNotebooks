@@ -28,7 +28,7 @@ setGeneric('getMotifsForRegion', signature='obj', function(obj, source.name, tra
 
 setGeneric('getDHSForRegion', signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
-           signature='obj', function(obj, roi.string, track.name=NA, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
+           signature='obj', function(obj, roi.string, tracking.name=NA, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
 
 setGeneric('findVariantsInModelForRegion', signature='obj',
             function(obj, roi.string, motif.track, variants.source, candidate.tfs, tfMotifMappingName, shoulder=0)
@@ -41,7 +41,7 @@ setGeneric('findMotifsInRegion', signature='obj',
 setGeneric('getCacheItemNames', signature='obj', function(obj) standardGeneric('getCacheItemNames'))
 setGeneric('getFromCache', signature='obj', function(obj, tracker.name) standardGeneric('getFromCache'))
 setGeneric('clearCache', signature='obj', function(obj) standardGeneric('clearCache'))
-setGeneric('intersectTracks', signature='obj', function(obj, trackName.1, trackName.2, shoulder) standardGeneric('intersectTracks'))
+setGeneric('intersectTracks', signature='obj', function(obj, trackName.1, trackName.2, newTrackName, shoulder) standardGeneric('intersectTracks'))
 
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
@@ -188,7 +188,7 @@ setMethod('getDHSForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getEnhancersForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roi.string, track.name=NA, score.threshold=NA){
+    function(obj, roi.string, tracking.name=NA, score.threshold=NA){
        roi <- trena::parseChromLocString(roi.string)
        tbl.all <- obj@singleGeneData@misc.data[["enhancer.locs"]]
        tbl.sub <- subset(tbl.all, chrom==roi$chrom & start >= roi$start & end <= roi$end)
@@ -229,7 +229,7 @@ setMethod('findMotifsInRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('intersectTracks', signature='SingleGeneAnalyzer',
 
-    function(obj, trackName.1, trackName.2, shoulder=0){
+    function(obj, trackName.1, trackName.2, newTrackName, shoulder=0){
         printf("sga::intersectTracks, %s in %s with shoulder: %d",  trackName.1, trackName.2, shoulder)
 
         if(!trackName.1 %in% ls(obj@trackerCache)){
@@ -259,6 +259,8 @@ setMethod('intersectTracks', signature='SingleGeneAnalyzer',
            tbl.out <- cbind(tbl.1, tbl.2)
            }
         printf("sga::intersectTracks found %d hits", nrow(tbl.out))
+        obj@trackerCache[[newTrackName]] <- tbl.out
+
         return(tbl.out)
         }) # intersectTracks
 
