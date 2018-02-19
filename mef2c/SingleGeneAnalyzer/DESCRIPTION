@@ -1,8 +1,8 @@
 Package: SingleGeneAnalyzer
 Type: Package
 Title: Analyze a single gene in terms of expression, regulation and variant analysis
-Version: 0.99.21
-Date: 2018-02-18
+Version: 0.99.23
+Date: 2018-02-19
 Author: Paul Shannon
 Maintainer: Paul Shannon <pshannon@systemsbiology.org>
 Description: Data and operations for the eqtl/enhancer trena notebook

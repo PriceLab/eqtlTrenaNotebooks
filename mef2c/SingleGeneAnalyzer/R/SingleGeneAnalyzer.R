@@ -42,7 +42,7 @@ setGeneric('getCacheItemNames', signature='obj', function(obj) standardGeneric('
 setGeneric('getFromCache', signature='obj', function(obj, tracker.name) standardGeneric('getFromCache'))
 setGeneric('clearCache', signature='obj', function(obj) standardGeneric('clearCache'))
 setGeneric('intersectTracks', signature='obj', function(obj, trackName.1, trackName.2, newTrackName, shoulder) standardGeneric('intersectTracks'))
-
+setGeneric('cacheTrack', signature='obj', function(obj, tbl.track, trackName) standardGeneric('cacheTrack'))
 #------------------------------------------------------------------------------------------------------------------------
 SingleGeneAnalyzer = function(genomeName, targetGene, targetGene.TSS, singleGeneData, quiet=TRUE)
 {
@@ -258,11 +258,18 @@ setMethod('intersectTracks', signature='SingleGeneAnalyzer',
            colnames(tbl.2) <- sprintf("%s.B", colnames(tbl.2))
            tbl.out <- cbind(tbl.1, tbl.2)
            }
-        printf("sga::intersectTracks found %d hits", nrow(tbl.out))
+        printf("sga::intersectTracks found %d hits, caching as '%s'", nrow(tbl.out), newTrackName)
         obj@trackerCache[[newTrackName]] <- tbl.out
 
         return(tbl.out)
         }) # intersectTracks
+
+#----------------------------------------------------------------------------------------------------
+setMethod('cacheTrack', 'SingleGeneAnalyzer',
+
+     function(obj, tbl.track, trackName){
+          obj@trackerCache[[trackName]] <- tbl.track
+          })
 
 #----------------------------------------------------------------------------------------------------
 # strategy:
