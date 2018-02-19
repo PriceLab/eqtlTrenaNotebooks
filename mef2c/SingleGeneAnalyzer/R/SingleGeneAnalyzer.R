@@ -28,7 +28,7 @@ setGeneric('getMotifsForRegion', signature='obj', function(obj, source.name, tra
 
 setGeneric('getDHSForRegion', signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getDHSForRegion'))
 setGeneric('getEnhancersForRegion',
-           signature='obj', function(obj, roi.string, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
+           signature='obj', function(obj, roi.string, track.name=NA, score.threshold=NA) standardGeneric ('getEnhancersForRegion'))
 
 setGeneric('findVariantsInModelForRegion', signature='obj',
             function(obj, roi.string, motif.track, variants.source, candidate.tfs, tfMotifMappingName, shoulder=0)
@@ -188,10 +188,12 @@ setMethod('getDHSForRegion', 'SingleGeneAnalyzer',
 #----------------------------------------------------------------------------------------------------
 setMethod('getEnhancersForRegion', 'SingleGeneAnalyzer',
 
-    function(obj, roi.string, score.threshold=NA){
+    function(obj, roi.string, track.name=NA, score.threshold=NA){
        roi <- trena::parseChromLocString(roi.string)
        tbl.all <- obj@singleGeneData@misc.data[["enhancer.locs"]]
        tbl.sub <- subset(tbl.all, chrom==roi$chrom & start >= roi$start & end <= roi$end)
+       if(!is.na(tracking.name))
+         obj@trackerCache[[tracking.name]] <- tbl.sub
        return(tbl.sub)
        })
 
@@ -231,11 +233,11 @@ setMethod('intersectTracks', signature='SingleGeneAnalyzer',
         printf("sga::intersectTracks, %s in %s with shoulder: %d",  trackName.1, trackName.2, shoulder)
 
         if(!trackName.1 %in% ls(obj@trackerCache)){
-           printf("'%s% named variable not in SingleGeneAnalyzer cacher", trackName.1)
+           printf("'%s named variable not in SingleGeneAnalyzer cache", trackName.1)
            return(data.frame())
            }
         if(!trackName.2 %in% ls(obj@trackerCache)){
-           printf("'%s% named variable not in SingleGeneAnalyzer cacher", trackName.2)
+           printf("'%s named variable not in SingleGeneAnalyzer cache", trackName.2)
            return(data.frame())
            }
         tbl.1 <- obj@trackerCache[[trackName.1]]
