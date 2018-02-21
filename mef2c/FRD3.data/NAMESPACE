@@ -1,0 +1,16 @@
+exportClasses(
+   FRD3.data
+)
+
+export(
+   FRD3.data
+   )
+
+exportMethods(
+  )
+
+
+import(SingleGeneData)
+
+
+
