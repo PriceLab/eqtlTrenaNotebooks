@@ -3,7 +3,8 @@ exportClasses(
 )
 
 export(
-   FRD3.data
+   FRD3.data,
+   findRegionsAboveThreshold
    )
 
 exportMethods(

@@ -25,8 +25,19 @@ FRD3.data = function()
      #----------------------------------------------------------------------------------------------------
      # load precalculated motifs from (only) the region of interest,
      #----------------------------------------------------------------------------------------------------
+
    load(system.file(package="FRD3.data", "extdata", "tbl.motifs.jaspar2018.athaliana.Chr3.2566277.2572151.ge85.RData"))
    misc.data[["motifs"]] <- list(jaspar2018.athaliana.Chr3.2566277.2572151.ge85 = tbl.motifs)
+     # todo: move these to the base class and first-class slots
+   misc.data[["TSS"]] <- list(primary=2569502,  secondary=2572149)
+   misc.data[["targetGene"]] <- "AT3G08040"
+
+     #----------------------------------------------------------------------------------------------------
+     # load precalculated dhs region scores, for leaves and for buds
+     #----------------------------------------------------------------------------------------------------
+
+   load(system.file(package="FRD3.data", "extdata", "tbls.frd3.dhs.budAndLeaf.RData"))
+   misc.data[["dhs"]] <- list(buds=tbl.frd3buds, leaves=tbl.frd3leaf)
 
    obj <- .FRD3.data(SingleGeneData(chrom="chr3",
                                     start=2566277,
@@ -56,3 +67,38 @@ setMethod('getMotifs', 'FRD3.data',
       })
 
 #----------------------------------------------------------------------------------------------------
+findRegionsAboveThreshold <- function(vec, threshold, minSpan, quiet=TRUE)
+{
+   vec[vec < threshold] <- NA
+   vec[vec >= threshold] <- 1
+   vec.rle <- rle(vec)
+   rle.segments.above.threshold <- which(vec.rle$lengths >= minSpan)
+       # make all runs less than desired.minSpan are NA'd
+   all.subMinimumSpans <- setdiff(1:length(vec.rle$values), rle.segments.above.threshold)
+   vec.rle$values[all.subMinimumSpans] <- NA    # vec.rle$values[18] <- NA
+
+   rle.region.count <- length(vec.rle$values)
+   actual.index <- 1
+
+   peak.starts <- vector("numeric", length(vec))
+   peak.ends <- vector("numeric", length(vec))
+   peak.count <- 0
+
+   for(i in 1:rle.region.count){
+      size <- vec.rle$length[i]
+      value <- vec.rle$values[i]
+      if(!is.na(value)){
+         peak.count <- peak.count + 1
+         region.start <- actual.index
+	 region.end   <- actual.index + size - 1
+	 if(!quiet) printf("peak found:  %d-%d", region.start, region.end)
+         peak.starts[peak.count] <- region.start
+         peak.ends[peak.count] <- region.end
+	 } # !is.na
+       actual.index <- actual.index + size
+       } # for i
+
+   list(starts=peak.starts[1:peak.count], ends=peak.ends[1:peak.count])
+
+} # findRegionsAboveThreshold
+#------------------------------------------------------------------------------------------------------------------------

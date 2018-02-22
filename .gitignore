@@ -2,7 +2,7 @@
 .Rhistory
 .Rapp.history
 
-# Session Data files
+# all (and often large) serialized data files
 *.RData
 
 # Example code in package build process

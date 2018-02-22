@@ -14,6 +14,8 @@ runTests <- function()
    test_getGenomicBounds()
    test_getExpressionMatrices()
    test_getMotifs()
+   test_getDHS()
+   test_findDHSpeaks()
    #test_getFootprints()
    #test_getModels()
    #test_getVariants()
@@ -30,7 +32,9 @@ test_getGenomicBounds <- function()
    roi.string <- getGenomicBounds(frd3, asString=TRUE)
    checkEquals(roi.string, "chr3:2566277-2572151")
 
-
+       # these will be come first-class slots in the SingleGeneData class
+   checkEquals(frd3@misc.data$targetGene, "AT3G08040")  # an orf name, the standard for athaliana
+   checkEquals(frd3@misc.data$TSS, list(primary=2569502,  secondary=2572149))
 
 } # test_getGenomicBounds
 #------------------------------------------------------------------------------------------------------------------------
@@ -73,6 +77,33 @@ test_getMotifs <- function()
    checkEquals(nrow(tbl.motifs), 14)
 
 } # test_getExpressionMatrices
+#------------------------------------------------------------------------------------------------------------------------
+test_getDHS <- function()
+{
+   printf("--- test_getDHS")
+   tbls.list <- frd3@misc.data$dhs
+   checkEquals(sort(names(tbls.list)), c("buds", "leaves"))
+   checkEquals(dim(tbls.list$buds), c(23500, 4))
+   checkEquals(dim(tbls.list$leaves), c(23500, 4))
+
+} # test_getDHS
+#------------------------------------------------------------------------------------------------------------------------
+test_findDHSpeaks <- function()
+{
+   printf("--- test_findDHSPeaks")
+
+   x <- sin(0:20)
+   threshold <- 0.6
+   minSpan <- 2
+   peak.info <- findRegionsAboveThreshold(x, threshold, minSpan)
+   checkEquals(peak.info$starts, c(2,8, 15))
+   checkEquals(peak.info$ends, c(3, 9, 16))
+   checkTrue(all(x[2:3] >= threshold))
+   checkTrue(all(x[8:9] >= threshold))
+   checkTrue(all(x[15:16] >= threshold))
+
+
+} # test_findDHSpeaks
 #------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()
