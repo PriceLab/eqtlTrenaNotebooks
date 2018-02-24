@@ -39,6 +39,18 @@ FRD3.data = function()
    load(system.file(package="FRD3.data", "extdata", "tbls.frd3.dhs.budAndLeaf.RData"))
    misc.data[["dhs"]] <- list(buds=tbl.frd3buds, leaves=tbl.frd3leaf)
 
+     #----------------------------------------------------------------------------------------------------
+     # MotifDb for athaliania maps motifs preferentially to uniprot ids.  load a variety of
+     # cross-referencing tables calculated previously.  tbl.xref, at least, is a boon, mapping
+     # uniprot id to athaliana orf
+     # the createion of tables is document in my log:
+     #     "my arabidopsis motif-to-tf mapping has gaps (31 dec 2017)"
+     #----------------------------------------------------------------------------------------------------
+
+   load(system.file(package="FRD3.data", "extdata", "tbl.xref.RData"))
+   misc.data[["xref"]] <- list(tbl.upOrf=tbl.upOrf, tbl.orfSym=tbl.orfSym,
+                               tbl.upOldgene=tbl.upOldgene, tbl.xref=tbl.xref)
+
    obj <- .FRD3.data(SingleGeneData(chrom="chr3",
                                     start=2566277,
                                     end=2572151,
