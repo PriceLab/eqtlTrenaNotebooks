@@ -1,3 +1,4 @@
+library(trena)
 library(FRD3.data)
 library(RUnit)
 library(GenomicRanges)
@@ -16,9 +17,7 @@ runTests <- function()
    test_getMotifs()
    test_getDHS()
    test_findDHSpeaks()
-   #test_getFootprints()
-   #test_getModels()
-   #test_getVariants()
+   test_makeModelForRegion()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -102,8 +101,55 @@ test_findDHSpeaks <- function()
    checkTrue(all(x[8:9] >= threshold))
    checkTrue(all(x[15:16] >= threshold))
 
+   x <- sin(0:20)
+   threshold <- 0.2
+   peak.info <- findRegionsAboveThreshold(x, threshold, 3)
+   checkEquals(peak.info$starts, c(8, 14))
+   checkEquals(peak.info$ends, c(10, 16))
+   checkTrue(all(x[8:10] >= threshold))
+   checkTrue(all(x[14:16] >= threshold))
+
+   tbl.frd3buds  <- frd3@misc.data$dhs$buds
+
+   minSpan <- 5
+   peaks.8 <- findRegionsAboveThreshold(tbl.frd3buds$score, 8, minSpan)
+   checkEquals(peaks.8$starts, 9229)
+   checkEquals(peaks.8$ends,   9310)
+   threshold <- 3
+   peaks.3 <- findRegionsAboveThreshold(tbl.frd3buds$score, threshold, minSpan)
+   checkEquals(length(peaks.3$starts), 11)
+   checkEquals(length(peaks.3$ends), 11)
+      # all at least of minimum length?
+   checkTrue(all(1 + peaks.3$ends - peaks.3$starts > minSpan))
+   a <- peaks.3$starts[8]
+   b <- peaks.3$ends[8]
+      # check one region.  all above threshold?
+   checkTrue(all(tbl.frd3buds$score[a:b] >= threshold))
 
 } # test_findDHSpeaks
+#------------------------------------------------------------------------------------------------------------------------
+test_makeModelForRegion <- function()
+{
+   printf("--- test_makeModelForRegion")
+
+   roi <- "3:2,569,288-2,572,388"   # 3100 bp region, classical proximal promoter of main transcript
+   x <- makeModelForRegion(frd3, dhs.cutoff=0.5, region=roi, trenaViz=NA)
+   checkEquals(sort(names(x)), c("model", "regions"))
+
+   checkEquals(dim(x$model), c(10, 10))
+
+   checkEquals(ncol(x$regions), 16)
+
+     # todo :usually 30, 32, 34 motif/rgeions.  saw 26 once.
+     # todo: not sure why the number of regions varies on each identical call.
+     # wherein lies the randomness?
+
+   checkTrue(all(x$model$gene %in% x$regions$geneSymbol))
+   checkTrue(all(x$regions$geneSymbol %in% x$model$gene))
+   checkTrue(all(x$regions$distance.from.tss < 3100))
+
+
+} # test_makeModelForRegion
 #------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()
