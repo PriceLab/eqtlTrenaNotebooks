@@ -110,14 +110,18 @@ setMethod('makeModelForRegion', 'FRD3.data',
                                          end=ends+peak.position.offset,
                                          stringsAsFactors=FALSE))
 
-       track.title <- sprintf("bud dhs > %f", dhs.cutoff)
-       if(!is.na(trenaViz))
-          addBedTrackFromDataFrame(trenaViz, track.title, tbl.dhs, color="darkGreen", trackHeight=50)
-
        tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.croi), GRanges(tbl.dhs), type="any"))
        colnames(tbl.ov) <- c("croi", "dhs")
-       stopifnot(nrow(tbl.ov) > 0)
+       if(nrow(tbl.ov) == 0){
+          printf("no DHS regions")
+          return(NA)
+          }
+
        tbl.dhs.currentView <- tbl.dhs[tbl.ov$dhs,]
+
+       track.title <- sprintf("bud dhs > %f", dhs.cutoff)
+       if(!is.na(trenaViz))
+          addBedTrackFromDataFrame(trenaViz, track.title, tbl.dhs.currentView, color="darkGreen", trackHeight=50)
 
        pfms <- as.list(query(query(MotifDb, "jaspar2018"), "athaliana"))
        mm <- MotifMatcher("tair10", pfms)
