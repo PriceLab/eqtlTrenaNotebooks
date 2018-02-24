@@ -18,6 +18,7 @@ runTests <- function()
    test_getDHS()
    test_findDHSpeaks()
    test_makeModelForRegion()
+   test_motifTrackForTF()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -150,6 +151,34 @@ test_makeModelForRegion <- function()
 
 
 } # test_makeModelForRegion
+#------------------------------------------------------------------------------------------------------------------------
+test_motifTrackForTF <- function()
+{
+   printf("--- test_motifTrackForTF")
+      # first make a model
+   roi <- "3:2,569,288-2,572,388"   # 3100 bp region, classical proximal promoter of main transcript
+   x <- makeModelForRegion(frd3, dhs.cutoff=1.5, region=roi, trenaViz=NA)
+   tbl.model <- x$model
+   tbl.motifs <- x$regions
+      # choose a tf with multiple binding sites
+   max.bindingSites <- max(tbl.model$bindingSites)
+   tf.with.max.bindingSites <- which(tbl.model$bindingSites == max.bindingSites)[1]
+   tf <- tbl.model$gene[tf.with.max.bindingSites]
+   tbl.bed <- motifTrackForTF(frd3, tbl.motifs, tf)
+   checkEquals(dim(tbl.bed), c(4, 5))
+   checkEquals(lapply(tbl.bed, class),
+               list(chrom="character", start="numeric", end="numeric", name="character", score="numeric"))
+   checkTrue(all(tbl.bed$motif == "MA0981.1"))
+
+   checkEquals(nrow(motifTrackForTF(frd3, tbl.motifs, "intentional error")), 0)
+
+   tf.withOneBindingSite <- subset(tbl.model, bindingSites==1)$gene[1]
+   tbl.bed <- motifTrackForTF(frd3, tbl.motifs, tf.withOneBindingSite)
+   checkEquals(dim(tbl.bed), c(1, 5))
+   checkEquals(lapply(tbl.bed, class),
+               list(chrom="character", start="numeric", end="numeric", name="character", score="numeric"))
+
+} # test_motifTrackForTF
 #------------------------------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

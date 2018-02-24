@@ -8,7 +8,8 @@ export(
    )
 
 exportMethods(
-  makeModelForRegion
+   makeModelForRegion,
+   motifTrackForTF
   )
 
 
