@@ -1,0 +1,16 @@
+FROM rocker/rstudio
+COPY .  /home/rstudio/
+RUN cat /home/rstudio/myBashCustomizations >> /home/rstudio/.bashrc
+RUN cat /home/rstudio/myRprofile >> /home/rstudio/.Rprofile
+RUN apt-get update
+RUN apt-get install libxml2-dev -y
+RUN apt-get -y install libmariadb-client-lgpl-dev -y
+RUN apt-get install libpq-dev -y
+RUN sudo apt-get install libpng-dev -y
+RUN sudo apt-get install zlib1g-dev -y
+user rstudio
+WORKDIR /home/rstudio
+RUN mkdir library
+RUN R -f installTrenaPrequisites-04.R
+user root
+CMD ["/init"]

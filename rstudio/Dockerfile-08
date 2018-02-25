@@ -1,0 +1,9 @@
+FROM trenastudio_07
+user rstudio
+COPY pkgs/* /home/rstudio/pkgs/
+COPY tester.R /home/rstudio
+RUN mkdir /home/rstudio/notebooks
+WORKDIR /home/rstudio
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/trenaViz_0.99.50.tar.gz
+user root
+CMD ["/init"]

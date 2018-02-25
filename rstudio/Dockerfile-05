@@ -1,0 +1,7 @@
+FROM trenastudio_04
+user rstudio
+COPY installTrenaPrequisites-05.R  /home/rstudio
+WORKDIR /home/rstudio
+RUN R -f installTrenaPrequisites-05.R
+user root
+CMD ["/init"]

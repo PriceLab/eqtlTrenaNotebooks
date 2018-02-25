@@ -1,0 +1,8 @@
+FROM trenastudio_05
+user rstudio
+COPY SNPlocs.Hsapiens.dbSNP150.GRCh38_0.99.20.tar.gz /home/rstudio
+COPY installTrenaPrequisites-06.R /home/rstudio
+WORKDIR /home/rstudio
+RUN R -f installTrenaPrequisites-06.R
+user root
+CMD ["/init"]

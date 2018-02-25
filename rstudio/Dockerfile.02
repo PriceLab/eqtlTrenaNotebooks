@@ -1,0 +1,5 @@
+FROM rocker/rstudio
+COPY .  /home/rstudio/
+RUN cat /home/rstudio/myBashCustomizations >> /home/rstudio/.bashrc
+RUN cat /home/rstudio/myRprofile >> /home/rstudio/.Rprofile
+CMD ["/init"]

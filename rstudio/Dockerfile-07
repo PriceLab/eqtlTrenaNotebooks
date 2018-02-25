@@ -1,0 +1,16 @@
+FROM trenastudio_06
+user rstudio
+COPY pkgs/* /home/rstudio/pkgs/
+COPY installTrenaPrequisites-07.R  /home/rstudio
+WORKDIR /home/rstudio
+RUN R -f installTrenaPrequisites-07.R
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/BrowserViz_2.0.4.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/trena_1.1.12.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/trenaViz_0.99.44.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/SingleGeneData_0.99.4.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/MEF2C.data_0.99.15.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/SingleGeneAnalyzer_0.99.19.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/MotifDb_1.21.2.tar.gz
+
+user root
+CMD ["/init"]

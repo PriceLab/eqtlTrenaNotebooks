@@ -1,0 +1,13 @@
+FROM trenastudio_08
+user rstudio
+COPY pkgs/* /home/rstudio/pkgs/
+COPY nbBasic.R /home/rstudio
+RUN mkdir /home/rstudio/notebooks
+WORKDIR /home/rstudio
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/trenaViz_0.99.50.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/SingleGeneAnalyzer_0.99.23.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/SingleGeneData_0.99.4.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/FRD3.data_0.99.05.tar.gz
+RUN R CMD INSTALL  --no-test-load /home/rstudio/pkgs/trenaViz_0.99.54.tar.gz
+user root
+CMD ["/init"]
