@@ -135,8 +135,10 @@ setStyle(tv, system.file(package="FRD3.data", "extdata", "style.js"))
 # relative to FRD3's TSS.  Another view, related to do this, can be created in
 # the IGV view:  specify the transcription factor (TF) of interest, then display
 # a new TF-specific motif binding site track.
-# examining the x1$model, you will see that ARR10 (AT4G31920) has 5 binding sites
-# in DHS region above threshold.  display these in a new track
+# examining the x2$model, you will see that ARR10 (AT4G31920) has 3 binding sites
+# in DHS region portrayed.  display these in a new track
+#
 #--------------------------------------------------------------------------------
-tbl.motifs <- motifTrackForTF(frd3, x1$regions, "AT4G39920")
+tbl.motifs <- motifTrackForTF(frd3, x2$regions, "AT4G31920")
+addBedTrackFromDataFrame(tv, trackName="ARR10", tbl.motifs, color="red", trackHeight=50)
 
