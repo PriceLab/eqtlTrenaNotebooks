@@ -139,6 +139,6 @@ setStyle(tv, system.file(package="FRD3.data", "extdata", "style.js"))
 # in DHS region portrayed.  display these in a new track
 #
 #--------------------------------------------------------------------------------
-tbl.motifs <- motifTrackForTF(frd3, x2$regions, "AT4G31920")
+tbl.motifs <- motifTrackForTF(frd3, m2$regions, "AT4G31920")
 addBedTrackFromDataFrame(tv, trackName="ARR10", tbl.motifs, color="red", trackHeight=50)
 
