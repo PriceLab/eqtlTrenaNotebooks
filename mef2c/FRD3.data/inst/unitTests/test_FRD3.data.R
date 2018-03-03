@@ -9,6 +9,20 @@ if(!exists("frd3")){
    frd3 <- FRD3.data()    # just load once, speeding up the tests
    checkTrue(all(c("SingleGeneData", "FRD3.data") %in% is(frd3)))
    }
+
+PORTS <- 5548:5599
+trenaViz <- NA
+if(exists("test.viz")){
+   if(test.viz){
+      library(trenaViz)
+      trenaViz <- trenaViz(portRange=PORTS)
+      setGenome(trenaViz, "tair10")
+      Sys.sleep(5)
+      roi <- getGenomicBounds(frd3)
+      roi.string <- with(roi, sprintf("%s:%d-%d", chrom, start, end))
+      showGenomicRegion(trenaViz, roi.string)   # about 3kb upstream and downstream of primary tss
+      }
+   }
 #----------------------------------------------------------------------------------------------------
 runTests <- function()
 {
@@ -129,12 +143,12 @@ test_findDHSpeaks <- function()
 
 } # test_findDHSpeaks
 #------------------------------------------------------------------------------------------------------------------------
-test_makeModelForRegion <- function()
+test_makeModelForRegion <- function(trenaViz=NA)
 {
    printf("--- test_makeModelForRegion")
 
    roi <- "3:2,569,288-2,572,388"   # 3100 bp region, classical proximal promoter of main transcript
-   x <- makeModelForRegion(frd3, dhs.cutoff=0.5, region=roi, trenaViz=NA)
+   x <- makeModelForRegion(frd3, dhs.cutoff=0.5, region=roi, trenaViz=trenaViz)
    checkEquals(sort(names(x)), c("model", "regions"))
 
    checkEquals(dim(x$model), c(10, 10))
@@ -152,19 +166,19 @@ test_makeModelForRegion <- function()
 
 } # test_makeModelForRegion
 #------------------------------------------------------------------------------------------------------------------------
-test_motifTrackForTF <- function()
+test_motifTrackForTF <- function(trenaViz=NA)
 {
    printf("--- test_motifTrackForTF")
       # first make a model
    roi <- "3:2,569,288-2,572,388"   # 3100 bp region, classical proximal promoter of main transcript
-   x <- makeModelForRegion(frd3, dhs.cutoff=1.5, region=roi, trenaViz=NA)
+   x <- makeModelForRegion(frd3, dhs.cutoff=1.5, region=roi, trenaViz=trenaViz)
    tbl.model <- x$model
    tbl.motifs <- x$regions
       # choose a tf with multiple binding sites
    max.bindingSites <- max(tbl.model$bindingSites)
    tf.with.max.bindingSites <- which(tbl.model$bindingSites == max.bindingSites)[1]
    tf <- tbl.model$gene[tf.with.max.bindingSites]
-   tbl.bed <- motifTrackForTF(frd3, tbl.motifs, tf)
+   tbl.bed <- motifTrackForTF(frd3, tbl.motifs, tf, trenaViz)
    checkEquals(dim(tbl.bed), c(4, 5))
    checkEquals(lapply(tbl.bed, class),
                list(chrom="character", start="numeric", end="numeric", name="character", score="numeric"))

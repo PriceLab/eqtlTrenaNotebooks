@@ -5,9 +5,7 @@
 #------------------------------------------------------------------------------------------------------------------------
 setGeneric('makeModelForRegion', signature='obj', function(obj, dhs.cutoff, region=NA, trenaViz=NA)
              standardGeneric('makeModelForRegion'))
-setGeneric('motifTrackForTF', signature='obj',  function(obj, tbl.motifs, tf) standardGeneric('motifTrackForTF'))
-#------------------------------------------------------------------------------------------------------------------------
-PORT <- 5548
+setGeneric('motifTrackForTF', signature='obj',  function(obj, tbl.motifs, tf, trenaViz=NA) standardGeneric('motifTrackForTF'))
 #------------------------------------------------------------------------------------------------------------------------
 FRD3.data = function()
 {
@@ -174,7 +172,7 @@ setMethod('makeModelForRegion', 'FRD3.data',
 #----------------------------------------------------------------------------------------------------
 setMethod('motifTrackForTF', 'FRD3.data',
 
-    function(obj, tbl.motifs, tf){
+    function(obj, tbl.motifs, tf, trenaViz=NA){
       tbl.bed <- subset(tbl.motifs, geneSymbol==tf)[, c("chrom", "start", "end", "motifName", "motifRelativeScore")]
       if(nrow(tbl.bed) == 0){
          printf("FRD3.data::motifTrackForTF error: no motifs for tf '%s'", tf)
@@ -188,7 +186,11 @@ setMethod('motifTrackForTF', 'FRD3.data',
       tbl.bed$motifName <- names
       colnames(tbl.bed) <- c("chrom", "start", "end", "name", "score")
       rownames(tbl.bed) <- NULL
-      tbl.bed
+      if(!is.na(trenaViz)){
+         track.title <- sprintf("%s motifs", tf)
+         addBedTrackFromDataFrame(trenaViz, track.title, tbl.bed, color="purple", trackHeight=50)
+         }
+      invisible(tbl.bed)
       })
 
 #----------------------------------------------------------------------------------------------------
