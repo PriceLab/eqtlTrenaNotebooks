@@ -118,8 +118,10 @@ setMethod('makeModelForRegion', 'FRD3.data',
        tbl.dhs.currentView <- tbl.dhs[tbl.ov$dhs,]
 
        track.title <- sprintf("bud dhs > %f", dhs.cutoff)
-       if(!is.na(trenaViz))
+       if(!is.na(trenaViz)){
+          raiseTab(trenaViz, "IGV")
           addBedTrackFromDataFrame(trenaViz, track.title, tbl.dhs.currentView, color="darkGreen", trackHeight=50)
+          }
 
        pfms <- as.list(query(query(MotifDb, "jaspar2018"), "athaliana"))
        mm <- MotifMatcher("tair10", pfms)
@@ -187,6 +189,7 @@ setMethod('motifTrackForTF', 'FRD3.data',
       colnames(tbl.bed) <- c("chrom", "start", "end", "name", "score")
       rownames(tbl.bed) <- NULL
       if(!is.na(trenaViz)){
+         raiseTab(trenaViz, "IGV")
          track.title <- sprintf("%s motifs", tf)
          addBedTrackFromDataFrame(trenaViz, track.title, tbl.bed, color="purple", trackHeight=50)
          }
