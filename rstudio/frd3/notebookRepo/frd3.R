@@ -102,8 +102,12 @@ setStyle(tv, system.file(package="FRD3.data", "extdata", "style.js"))
 # 
 tbl.model <- m1$model
 tbl.motifs <- m1$regions
-# choose a tf with multiple binding sites
-max.bindingSites <- max(tbl.model$bindingSites)
-tf.with.max.bindingSites <- which(tbl.model$bindingSites == max.bindingSites)[1]
-tf <- tbl.model$gene[tf.with.max.bindingSites]
+# the first tf in the model, ARR10/AT4G31920 has 5 binding sites.  put then in an igv track
+# note that these motifs and this model is from the first region we looked at, the apparently
+# primary transcript for FRD3.  thus we first reset the visible genomic region in igv, with
+# some extra room on each side
+roi <- getGenomicBounds(frd3)
+generous.roi.string <- with(roi, sprintf("%s:%d-%d", chrom, start-1000, end+1000))
+showGenomicRegion(tv, generous.roi.string)   # about 3kb upstream and downstream of primary tss
+tf <- tbl.model$gene[1]
 tbl.bed <- motifTrackForTF(frd3, tbl.motifs, tf, tv)
