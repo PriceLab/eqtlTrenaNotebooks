@@ -1,8 +1,8 @@
 Package: FRD3.data
 Type: Package
 Title: FRD3.data
-Version: 0.99.07
-Date: 2018-03-04
+Version: 0.99.09
+Date: 2018-03-05
 Author: Paul Shannon
 Maintainer: Paul Shannon<pshannon@systemsbiology.org>
 Description: package access to expression, dhs, motif data for FRD3
