@@ -17,6 +17,7 @@ runTests <- function()
    test_getModels()
    test_getVariants()
    test_getMotifs()
+   test_buildModels()
 
 } # runTests
 #------------------------------------------------------------------------------------------------------------------------
@@ -155,6 +156,15 @@ test_getMotifs <- function()
    checkEquals(colnames(tbl.motifs)[1:5], c("chrom", "start", "end", "name", "score"))
 
 } # test_getMotifs
+#----------------------------------------------------------------------------------------------------
+test_buildModels <- function()
+{
+   printf("--- test_buildModels")
+   roi.string <- "chr5:88,880,466-88,888,467" # 8kb around the TSS
+   x <- makeModelForRegion(mef2c, "mtx.tcx", roi.string)
+   x2 <- makeModelForRegion(mef2c, "mtx.tcx", "chr5:88,883,421-88,883,900")
+
+} # test_buildModels
 #----------------------------------------------------------------------------------------------------
 if(!interactive())
    runTests()

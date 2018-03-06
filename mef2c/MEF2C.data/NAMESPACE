@@ -10,11 +10,13 @@ exportMethods(
   getGenomicBounds,
   getExpressionMatrices,
   getFootprints,
-  getModels
+  getModels,
+  makeModelForRegion
   )
 
 
 import(SingleGeneData)
+import(trena)
 
 
 

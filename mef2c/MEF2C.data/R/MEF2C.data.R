@@ -8,6 +8,8 @@ setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) st
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
+setGeneric('makeModelForRegion', signature='obj', function(obj, expression.matrix.name, region.string=NA, trenaViz=NA)
+              standardGeneric('makeModelForRegion'))
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
@@ -40,6 +42,9 @@ MEF2C.data = function()
          # all motifs with motifRelativeScore >= 0.85, quite permissive
 
    misc.data <- new.env(parent=emptyenv())
+   misc.data[["targetGene"]] <- "MEF2C"
+   misc.data[["TSS"]] <- 88884466
+
    misc.data[["enhancer.locs"]] <- tbl.mef2c.eLocs
    misc.data[["enhancer.motifs.mdb"]] <- tbl.eMotifs.mdb
    misc.data[["enhancer.motifs.tfc"]] <- tbl.eMotifs.tfc
@@ -232,3 +237,58 @@ setMethod('getMotifs', 'MEF2C.data',
        })
 
 #----------------------------------------------------------------------------------------------------
+# build a model using all footprints in enhancers in the currently displayed region
+setMethod('makeModelForRegion', 'MEF2C.data',
+
+    function(obj, expression.matrix.name, region.string=NA, trenaViz=NA){
+       stopifnot(expression.matrix.name %in% c("mtx.cer", "mtx.ros","mtx.tcx"))
+       mtx <- getExpressionMatrices(obj)[[expression.matrix.name]]
+       tss <- obj@misc.data$TSS
+       browser()
+       if(is.na(region.string)){
+          if(is.na(trenaViz)){
+             printf("if not supplying explicit genomic region, must supply trenaViz so that can be queried")
+             return(NA)
+             }
+          region.string <- getGenomicRegion(trenaViz)
+          }
+       region <- parseChromLocString(region.string)
+
+           #--------------------------------------------------------------------------------
+           # consider all the footprints in enhancer regions in region
+           #--------------------------------------------------------------------------------
+
+       tbl.enhancers <- obj@misc.data$enhancer.locs
+       tbl.enhancersClipped <- subset(tbl.enhancers, chrom=region$chrom & start >= region$start & end <= region$end)
+       tbl.fp <- getFootprints(mef2c, region)
+       tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.fp), GRanges(tbl.enhancers)))
+       colnames(tbl.ov) <- c("fp", "enhancers")
+       tbl.fpe <- tbl.fp[unique(tbl.ov$fp),]
+
+       tfClass.candidate.tfs <- unique(tbl.fpe$geneSymbol)
+       tfClass.candidate.tfs <- intersect(tfClass.candidate.tfs, rownames(mtx))
+
+       trena <- Trena("hg38")
+       solver.names <- c("lasso", "pearson", "randomForest", "ridge", "spearman")
+       tbl.model.tfClass <- createGeneModel(trena, "MEF2C", solver.names, tbl.fpe, mtx)
+
+       pfms.human <- as.list(query(query(MotifDb, "jaspar2018"), "hsapiens"))
+       pfms.mouse <- as.list(query(query(MotifDb, "jaspar2018"), "mmusculus"))
+       pfms <- c(pfms.human, pfms.mouse)
+       mm <- MotifMatcher("hg38", pfms)
+
+       tbl.fpe.regions <- unique(tbl.fpe[, c("chrom", "start", "end")])
+       tbl.eMotifs.mdb <- obj@misc.data$enhancer.motifs.mdb[, c("chrom", "motifStart", "motifEnd", "motifName", "shortMotif")]
+       colnames(tbl.eMotifs.mdb) <- c("chrom", "start", "end", "motifName", "shortMotif")
+       tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.eMotifs.mdb), GRanges(tbl.fpe.regions), type="any"))  # any|within
+       colnames(tbl.ov) <- c("motifs", "fpEnhancers")
+       tbl.motifs <- tbl.eMotifs.mdb[unique(tbl.ov$motifs),]
+       dim(tbl.motifs)
+       tbl.motifs <- associateTranscriptionFactors(MotifDb, tbl.motifs, source="MotifDb")
+       tbl.model.motifDb <- createGeneModel(trena, "MEF2C", solver.names, tbl.motifs, mtx)
+
+       return(list(tfClassFp=list(model=tbl.model.tfClass, motifs=tbl.fpe),
+                     motifDb=list(model=tbl.model.motifDb, motifs=tbl.motifs)))
+       }) # makeModelForREgion
+
+#------------------------------------------------------------------------------------------------------------------------
