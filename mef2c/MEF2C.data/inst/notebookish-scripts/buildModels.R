@@ -2,6 +2,22 @@ library(trena)
 library(trenaViz)
 library(MEF2C.data)
 
+#------------------------------------------------------------------------------------------------------------------------
+intersect <- function(tbl.foreground, tbl.background)
+{
+   browser()
+   stopifnot(colnames(tbl.foreground)[1:3] == c("chrom", "start", "end"))
+   stopifnot(colnames(tbl.background)[1:3] == c("chrom", "start", "end"))
+   tbl.foreground <- tbl.foreground[order(tbl.foreground$start, decreasing=FALSE),]
+   tbl.background <- tbl.background[order(tbl.background$start, decreasing=FALSE),]
+
+   tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.foreground), GRanges(tbl.background)))
+   colnames(tbl.ov) <- c("foreground", "background")
+
+   tbl.foreground[unique(tbl.ov$foreground),]
+
+} # intersect
+#------------------------------------------------------------------------------------------------------------------------
 PORTS <- 10000:10020   # trenaViz claims a websocket port in this range, over which R, igv and cytoscape communicate
 
 tv <- trenaViz(portRange=PORTS)
@@ -50,3 +66,9 @@ tbl.eMotifs.tfc <- tbl.eMotifs.tfc[, c("chrom", "motifStart", "motifEnd", "name"
 colnames(tbl.eMotifs.tfc) <- c("chrom", "start", "end", "name", "score")
 tbl.eMotifs.tfc <- tbl.eMotifs.tfc[order(tbl.eMotifs.tfc[, 2], decreasing=FALSE),]
 addBedTrackFromDataFrame(tv, "eMoTFC", tbl.eMotifs.tfc, color="brown")
+
+tbl.igapVariants <- mef2c@misc.data[["IGAP.snpChip"]]
+dim(tbl.igapVariants)
+colnames(tbl.igapVariants)[grep("score", colnames(tbl.igapVariants))] <- "oldScore"
+tbl.igapVariants$score <- -log10(tbl.igapVariants$pval)
+

@@ -15,7 +15,8 @@ if(!exists("trena"))
 
 roi <- list(chrom='chr5', start= 88391000, end=89322000)
 targetGene <- "MEF2C"
-targetGene.tss <- 88904257
+# targetGene.tss <- 88904257
+targetGene.tss <- 88884466   # from igv loaded with genecode v24
 
 source.1 <- "postgres://bddsrds.globusgenomics.org/skin_wellington_16"
 source.2 <- "postgres://bddsrds.globusgenomics.org/skin_wellington_20"

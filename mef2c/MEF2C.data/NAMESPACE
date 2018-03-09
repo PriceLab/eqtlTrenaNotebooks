@@ -11,12 +11,15 @@ exportMethods(
   getExpressionMatrices,
   getFootprints,
   getModels,
-  makeModelForRegion
+  makeModelForRegion,
+  motifTrackForTF,
+  intersectRegions
   )
 
 
 import(SingleGeneData)
 import(trena)
+import(GenomicRanges)
 
 
 

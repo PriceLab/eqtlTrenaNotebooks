@@ -8,8 +8,20 @@ setGeneric('getGenomicBounds', signature='obj', function(obj, asString=FALSE) st
 setGeneric('getExpressionMatrices', signature='obj', function(obj) standardGeneric ('getExpressionMatrices'))
 setGeneric('getFootprints', signature='obj', function(obj, roi) standardGeneric ('getFootprints'))
 setGeneric('getEnhancers', signature='obj', function(obj, roi) standardGeneric ('getEnhancers'))
-setGeneric('makeModelForRegion', signature='obj', function(obj, expression.matrix.name, region.string=NA, trenaViz=NA)
+setGeneric('makeModelForRegion', signature='obj', function(obj, expression.matrix.name, region.string=NA, trenaViz=NA,
+                                                           maxTfsInModel=10, orderBy="pcaMax")
               standardGeneric('makeModelForRegion'))
+  # todo: move this to SingleGeneData.R
+setGeneric('motifTrackForTF', signature='obj',  function(obj, tbl.motifs, tf, trenaViz=NA) standardGeneric('motifTrackForTF'))
+  # todo: maybe move this to SingleGeneData.R
+setGeneric('intersectRegions', signature='obj', function(obj, tbl.foreground, tbl.background) standardGeneric('intersectRegions'))
+#------------------------------------------------------------------------------------------------------------------------
+# get tss
+library(RPostgreSQL)
+database.host <- "bddsrds.globusgenomics.org"
+db.hg38 <- dbConnect(PostgreSQL(), user= "trena", password="trena", dbname="hg38", host=database.host)
+query <- "select * from gtf where moleculetype='gene' and gene_biotype='protein_coding' and gene_name='MEF2C' limit 5"
+dbGetQuery(db.hg38, query)[, c(1:3,5,10)]
 #------------------------------------------------------------------------------------------------------------------------
 MEF2C.data = function()
 {
@@ -29,6 +41,11 @@ MEF2C.data = function()
        #--------------------------------------------------------------------------------
 
    load(system.file(package="MEF2C.data", "extdata", "tbl.fp.chr5.88391000-89322000.4sources.noDups.RData")) #
+   getLastToken <- function(string){
+      tokens <- strsplit(string, "-")[[1]]; return(tokens[length(tokens)])
+      }
+   tbl.fp$shortMotifName <- unlist(lapply(tbl.fp$motifName, getLastToken))
+
 
        #--------------------------------------------------------------------------------
        # enhancers and their motifs
@@ -43,7 +60,12 @@ MEF2C.data = function()
 
    misc.data <- new.env(parent=emptyenv())
    misc.data[["targetGene"]] <- "MEF2C"
-   misc.data[["TSS"]] <- 88884466
+     # gtf says
+     #    chr    start   endpos strand gene_name
+     # 1 chr5 88717117 88904257      -     MEF2C
+
+   misc.data[["TSS"]] <- 88884466   # so says igv based on gencode v24
+   #misc.data[["TSS"]] <- 88904257
 
    misc.data[["enhancer.locs"]] <- tbl.mef2c.eLocs
    misc.data[["enhancer.motifs.mdb"]] <- tbl.eMotifs.mdb
@@ -240,11 +262,10 @@ setMethod('getMotifs', 'MEF2C.data',
 # build a model using all footprints in enhancers in the currently displayed region
 setMethod('makeModelForRegion', 'MEF2C.data',
 
-    function(obj, expression.matrix.name, region.string=NA, trenaViz=NA){
+    function(obj, expression.matrix.name, region.string=NA, trenaViz=NA, maxTfsInModel=10, orderBy="pcaMax"){
        stopifnot(expression.matrix.name %in% c("mtx.cer", "mtx.ros","mtx.tcx"))
        mtx <- getExpressionMatrices(obj)[[expression.matrix.name]]
        tss <- obj@misc.data$TSS
-       browser()
        if(is.na(region.string)){
           if(is.na(trenaViz)){
              printf("if not supplying explicit genomic region, must supply trenaViz so that can be queried")
@@ -272,12 +293,21 @@ setMethod('makeModelForRegion', 'MEF2C.data',
        solver.names <- c("lasso", "pearson", "randomForest", "ridge", "spearman")
        tbl.model.tfClass <- createGeneModel(trena, "MEF2C", solver.names, tbl.fpe, mtx)
 
+       stopifnot(orderBy %in% colnames(tbl.model.tfClass))
+       new.order <- order(tbl.model.tfClass[orderBy], decreasing=TRUE)
+
+       tbl.model.tfClass <- tbl.model.tfClass[new.order,]
+       tbl.model.tfClass <- head(tbl.model.tfClass, n=maxTfsInModel)
+
+       tbl.fpe.strong <- subset(tbl.fpe, geneSymbol %in% tbl.model.tfClass$gene)
+
        pfms.human <- as.list(query(query(MotifDb, "jaspar2018"), "hsapiens"))
        pfms.mouse <- as.list(query(query(MotifDb, "jaspar2018"), "mmusculus"))
+
        pfms <- c(pfms.human, pfms.mouse)
        mm <- MotifMatcher("hg38", pfms)
 
-       tbl.fpe.regions <- unique(tbl.fpe[, c("chrom", "start", "end")])
+       tbl.fpe.regions <- unique(tbl.fpe.strong[, c("chrom", "start", "end")])
        tbl.eMotifs.mdb <- obj@misc.data$enhancer.motifs.mdb[, c("chrom", "motifStart", "motifEnd", "motifName", "shortMotif")]
        colnames(tbl.eMotifs.mdb) <- c("chrom", "start", "end", "motifName", "shortMotif")
        tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.eMotifs.mdb), GRanges(tbl.fpe.regions), type="any"))  # any|within
@@ -287,8 +317,71 @@ setMethod('makeModelForRegion', 'MEF2C.data',
        tbl.motifs <- associateTranscriptionFactors(MotifDb, tbl.motifs, source="MotifDb")
        tbl.model.motifDb <- createGeneModel(trena, "MEF2C", solver.names, tbl.motifs, mtx)
 
-       return(list(tfClassFp=list(model=tbl.model.tfClass, motifs=tbl.fpe),
-                     motifDb=list(model=tbl.model.motifDb, motifs=tbl.motifs)))
-       }) # makeModelForREgion
+       stopifnot(orderBy %in% colnames(tbl.model.motifDb))
+       new.order <- order(tbl.model.motifDb[orderBy], decreasing=TRUE)
+       tbl.model.motifDb <- tbl.model.motifDb[new.order,]
+       tbl.model.motifDb <- head(tbl.model.motifDb, n=maxTfsInModel)
+
+       tbl.motifs.strong <- subset(tbl.motifs, geneSymbol %in% tbl.model.motifDb$gene)
+       distance <- tbl.motifs.strong$start - tss
+       direction <- rep("upstream", length(distance))
+       direction[which(distance < 0)] <- "downstream"
+       tbl.motifs.strong$distance.from.tss <- distance
+       tbl.motifs.strong$id <- sprintf("%s.dhs.%s.%06d.%s", "MEF2C", direction, abs(distance), tbl.motifs.strong$motifName)
+
+
+       return(list(tfClassFp=list(model=tbl.model.tfClass, regions=tbl.fpe.strong),
+                     motifDb=list(model=tbl.model.motifDb, regions=tbl.motifs.strong)))
+       }) # makeModelForRegion
 
 #------------------------------------------------------------------------------------------------------------------------
+setMethod('motifTrackForTF', 'MEF2C.data',
+
+    function(obj, tbl.motifs, tf, trenaViz=NA){
+      tbl.bed <- subset(tbl.motifs, geneSymbol==tf)[, c("chrom", "start", "end", "id")] #, "motifRelativeScore")]
+      if(nrow(tbl.bed) == 0){
+         printf("FRD3.data::motifTrackForTF error: no motifs for tf '%s'", tf)
+         return(tbl.bed)
+         }
+      getLastToken <- function(longMotifName){
+         tokens <- strsplit(longMotifName, "-")[[1]];
+         return(tokens[length(tokens)])
+         }
+      #names <-unlist(lapply(tbl.bed$motifName, getLastToken))
+      #tbl.bed$motifName <- names
+      colnames(tbl.bed) <- c("chrom", "start", "end", "name")
+      rownames(tbl.bed) <- NULL
+      tbl.bed <- tbl.bed[order(tbl.bed$start, decreasing=FALSE),]
+      if(!is.na(trenaViz)){
+         raiseTab(trenaViz, "IGV")
+         track.title <- sprintf("%s motifs", tf)
+         addBedTrackFromDataFrame(trenaViz, track.title, tbl.bed, color="purple", trackHeight=50)
+         }
+      invisible(tbl.bed)
+      })
+
+#----------------------------------------------------------------------------------------------------
+setMethod('intersectRegions', 'MEF2C.data',
+
+    function(obj, tbl.foreground, tbl.background){
+       stopifnot(colnames(tbl.foreground)[1:3] == c("chrom", "start", "end"))
+       stopifnot(colnames(tbl.background)[1:3] == c("chrom", "start", "end"))
+       tbl.foreground <- tbl.foreground[order(tbl.foreground$start, decreasing=FALSE),]
+       tbl.background <- tbl.background[order(tbl.background$start, decreasing=FALSE),]
+
+       tbl.ov <- as.data.frame(findOverlaps(GRanges(tbl.foreground), GRanges(tbl.background)))
+       colnames(tbl.ov) <- c("foreground", "background")
+
+       tbl.foreground[unique(tbl.ov$foreground),]
+       })
+
+#----------------------------------------------------------------------------------------------------
+score.motifs <- function(tbl, i)
+{
+  seq <- tbl$seq[i]
+  name <- tbl$motifName[i]
+  pwm <- MotifDb[[name]]
+  return(trena:::.matchPwmForwardAndReverse(seq, pwm, name, 70)$relativeScore)
+
+} # score.motifs
+#----------------------------------------------------------------------------------------------------
